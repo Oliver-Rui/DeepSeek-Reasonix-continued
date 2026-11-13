@@ -42,9 +42,13 @@ describe("a new session opens in the workspace on screen", () => {
 
     asked.length = 0;
     // The button in the rail's head, which is the one that has no folder of its
-    // own to belong to — the rows below name theirs.
+    // own to belong to — the rows below name theirs. It asks which project
+    // first: nothing opens until a row answers, and the answer is the root.
     const head = document.querySelector(".studio-rail-head") as HTMLElement;
     await userEvent.click(within(head).getByRole("button", { name: /新建会话/ }));
+    const picker = await screen.findByRole("dialog", { name: "选择项目" });
+    expect(asked).toEqual([]);
+    await userEvent.click(within(picker).getByRole("button", { name: /my-website/ }));
     await waitFor(() => expect(asked).toEqual([SECOND]));
   });
 

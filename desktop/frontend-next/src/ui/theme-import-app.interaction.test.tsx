@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "./testkit";
 import { App } from "./App";
@@ -51,6 +51,10 @@ it.each(["completed", "pending"])("keeps a %s machine theme import when the comm
   else await screen.findByRole("button", { name: "正在导入…" });
   await userEvent.keyboard("{Control>}k{/Control}");
   await userEvent.click(await screen.findByRole("button", { name: /^新建会话操作$/ }));
+  // 新建会话 asks which project first; the local session the claim is about
+  // opens once a row answers.
+  const picker = await screen.findByRole("dialog", { name: "选择项目" });
+  await userEvent.click(within(picker).getByRole("button", { name: /DeepSeek-Reasonix/ }));
   await waitFor(() => expect(sessionStorage.getItem("rx-active-pane")).not.toBe(remote.id));
   expect(document.querySelector(".prefs")).toBe(sheet);
   if (state === "pending") await act(async () => finish(imported));

@@ -54,6 +54,7 @@ import { Sidebar } from "./Sidebar";
 import { PeerThreadsProvider } from "./peerthreads";
 import { WallpaperStage } from "./WallpaperStage";import { useAddWorkspace } from "./addws";
 import { AddWorkspacePrompt } from "./AddWorkspacePrompt";
+import { NewSessionPicker } from "./NewSessionPicker";
 import { PaneTabs } from "./PaneTabs";
 import { paneReader } from "../state/paneread";
 import { onShowsSessionTabsChange, showsSessionTabs } from "../state/prefs";
@@ -67,7 +68,7 @@ import { useTreeRead } from "./useTreeRead";
 import { useSidebarOpen } from "./sidebaropen";
 import { useOpenPane } from "./useOpenPane";
 import { useOpenRemotePane } from "./useOpenRemotePane";
-import { useNewConversation } from "./useNewConversation";
+import { useNewSessionPicker } from "./useNewSessionPicker";
 import { markSettled } from "../boot/gate";
 import type { PaneView } from "../state/paneview";
 import { usePaneSessionRefs } from "./usePaneSessionRefs";
@@ -457,7 +458,12 @@ export function App({ hub }: { hub: HubPort }) {
   const { errorBar, note, bar } = useWindowNotices({ error, setError, onReport: reportError, tree, port: machineRt ? machinePort : null, feedbackOpen: feedback !== null });
   const activeWorkspace = tree.find((ws) => !activeRuntime?.host && workspaceContains(ws, activeRuntime?.root)) ?? tree[0];
   const newSessionRoot = activeWorkspace?.root;
-  const startConversation = useNewConversation(active, runtimes, newSessionRoot, openPane, openRemotePane);
+  // 新建会话 asks where to work before the kernel hears about it: the picker
+  // lists the remembered projects, and 「不在项目中工作」 sends no root at all,
+  // which the kernel answers with its own auto workspace. Only the per-project
+  // 新建 in the tree bypasses it — its row already names the project.
+  const { pickerOpen, projects: pickerProjects, showPicker, hidePicker, pickProject } =
+    useNewSessionPicker({ tree: viewed.tree, remotes, remoteTrees: viewed.remote, runtimes, openPane, openRemotePane, fail });
 
   usePaneForSheets({
     settings: !!settings,
@@ -566,7 +572,7 @@ export function App({ hub }: { hub: HubPort }) {
             onSearch={() => setPalette(true)}
             onNew={() => {
               hidePrefs();
-              void startConversation().catch(fail);
+              void showPicker();
             }}
             feedbackUnread={feedbackUnread}
             shown={navRail.shown}
@@ -603,7 +609,7 @@ export function App({ hub }: { hub: HubPort }) {
           adder={adder}
           opening={sw.path}
           onOpen={openFromSidebar}
-          onNew={startConversation}
+          onNew={showPicker}
           onOpenRemote={openRemotePane}
           onFocusPane={focusPane}
           onClosePanes={closePanes}
@@ -703,13 +709,13 @@ export function App({ hub }: { hub: HubPort }) {
                 {!treeRead ? null : tree.length === 0 ? (
                   <>
                     <p className="h">{t("app.you_can_start_without_a")}</p>
-                    <button data-action="session.new" onClick={() => void startConversation().catch(fail)}>{t("common.start_a_new_session")}</button>
+                    <button data-action="session.new" onClick={() => void showPicker()}>{t("common.start_a_new_session")}</button>
                     <button data-action="workspace.add" disabled={adder.busy} onClick={() => adder.add()}>{t("app.add_folder")}</button>
                   </>
                 ) : (
                   <>
                     <p className="h">{t("app.pick_one_on_the_left")}</p>
-                    <button data-action="session.new" onClick={() => void startConversation().catch(fail)}>{t("common.start_a_new_session")}</button>
+                    <button data-action="session.new" onClick={() => void showPicker()}>{t("common.start_a_new_session")}</button>
                   </>
                 )}
               </div>
@@ -722,6 +728,9 @@ export function App({ hub }: { hub: HubPort }) {
       </div>
 
       {adder.pathOpen && <AddWorkspacePrompt busy={adder.busy} onSubmit={adder.addPath} onClose={adder.closePath} />}
+      {pickerOpen && (
+        <NewSessionPicker projects={pickerProjects} adder={adder} onPick={pickProject} onClose={hidePicker} />
+      )}
       {renaming && (
         <RenameSession session={renaming} hub={hub} onClose={() => setRenaming(null)}
           onSaved={() => { setRenaming(null); void reloadTree().catch(fail); }} />

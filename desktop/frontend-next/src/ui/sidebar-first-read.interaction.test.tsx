@@ -73,5 +73,10 @@ it("offers a new session in the main area when there are no folders", async () =
   expect(empty.querySelector('button[data-action="workspace.add"]')).toBeTruthy();
 
   await act(async () => { start!.click(); });
+  // 新建会话 asks which project first; with no folders the picker still offers
+  // the escape, and 不在项目中工作 is the answer that sends no root — the
+  // session then opens in the app's own workspace, as the prompt says.
+  await screen.findByRole("dialog", { name: "选择项目" });
+  await act(async () => { screen.getByRole("button", { name: "不在项目中工作" }).click(); });
   expect(opened).toEqual([{ root: undefined }]);
 });
