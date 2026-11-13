@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import "./testkit";
@@ -42,6 +42,10 @@ async function refreshFromNewSession(hub: MockHub) {
   const read = vi.spyOn(hub, "tree").mockReturnValue(pending);
   await userEvent.keyboard("{Control>}k{/Control}");
   await userEvent.click(await screen.findByRole("button", { name: /^新建会话操作$/ }));
+  // 新建会话 asks which project first; picking one is what opens the session
+  // and so what re-reads the tree.
+  const picker = await screen.findByRole("dialog", { name: "选择项目" });
+  await userEvent.click(within(picker).getByRole("button", { name: /DeepSeek-Reasonix/ }));
   await waitFor(() => expect(read).toHaveBeenCalled());
   return { resolve, reject };
 }
