@@ -33,6 +33,8 @@ import { NO_PAGING, atCap, answers, unloaded } from "./treewindow";
 import type { WorkspacesProps } from "./workspaceprops";
 import { SessionBatch, useSelectedRows } from "./SessionBatch";
 import { ProjectsHeader } from "./ProjectsHeader";
+import { WorkspaceGroupHead } from "./WorkspaceGroupHeaders";
+import { workspaceGroups } from "./workspaceGroups";
 import { useWorkspaceDrag } from "./useWorkspaceDrag";
 import { SessionTail } from "./SessionAge";
 import { SessionArchiveAction, SessionMoreAction, SessionPinAction } from "./SessionRowActions";
@@ -308,11 +310,7 @@ function WorkspacesView({ hub, tree, treeRead, answered = null, runtimes, active
     .sort((a, b) => {
       const d = newest(b) - newest(a);
       return recency === "newest" ? d : recency === "oldest" ? -d : 0;
-    })
-    // 任务 is the folder the window itself opened in, not a project the person
-    // added: the kernel marks only chosen folders with `remembered`. It sits at
-    // the foot so the projects stay one unbroken run above it.
-    .sort((a, b) => Number(!!b.remembered) - Number(!!a.remembered));
+    });
   // A fold is a resting-state preference: while a word is being typed it would
   // hide the very rows that word just found.
   const searching = !!needle;
@@ -346,7 +344,10 @@ function WorkspacesView({ hub, tree, treeRead, answered = null, runtimes, active
     }
     return next;
   });
-  const displayed = shownTree.filter((ws) => needle || !folded.has(ws.root))
+  // Draw order: the chosen folders as one run, the window's own folder after it.
+  const groups = workspaceGroups(shownTree);
+  const ordered = [...groups.projects, ...groups.tasks];
+  const displayed = ordered.filter((ws) => needle || !folded.has(ws.root))
     .flatMap(visibleSessions);
   const selected = useSelectedRows(displayed, selection, setSelection);
   const otherRows = hasOtherRows ? hasOtherRows(needle, hideLegacy) : !!children;
@@ -369,7 +370,7 @@ function WorkspacesView({ hub, tree, treeRead, answered = null, runtimes, active
         onSelect={() => setSelection(new Set())} selecting={selection !== null} canSelect={displayed.length > 0} />
       <div className="scroll">
         <div role="tree" aria-label={t("session.projects_and_conversations")} aria-multiselectable={selection !== null} inert={busy === "batch"} data-action-keydown="tree.navigate" ref={treeKeys.ref} onKeyDown={treeKeys.onKeyDown}>
-          {shownTree.map((ws) => {
+          {ordered.map((ws, at) => {
             // A fold is a resting-state preference; while a query is on it would hide
             // the very rows the query just found.
             const hasChildren = ws.sessions.length > 0 || ws.countsComplete === false || ws.listingState === "degraded" || (pagedScope && unloaded(ws, loadedRows(ws.root)) > 0);
@@ -379,17 +380,13 @@ function WorkspacesView({ hub, tree, treeRead, answered = null, runtimes, active
             // Only while the question is on screen: panesOf walks every runtime.
             const doomed = confirm === ws.root ? panesOf(ws.root) : [];
             const busyPanes = liveIds(doomed).length;
+            // ordered runs the projects first, so each label lands on its run's first row.
+            const opensProjects = at === 0 && groups.projects.length > 0;
+            const opensTasks = at === groups.projects.length;
             return (
               <div className="wsnode" key={ws.root} data-current={panesOf(ws.root).includes(active) ? "" : undefined} data-missing={ws.missing ? "" : undefined}>
-                {/* 任务 is announced over its rows rather than replacing them:
-                    the folder is not a project someone added, but it is still
-                    a folder, and its row keeps working like any other. */}
-                {!ws.remembered && (
-                  <div className="wsgroup">
-                    <StudioIcon name="tasks" />
-                    <span>{t("session.tasks")}</span>
-                  </div>
-                )}
+                {opensProjects && <WorkspaceGroupHead group="projects" />}
+                {opensTasks && <WorkspaceGroupHead group="tasks" />}
                 {confirm === ws.root ? (
                   <Confirm
                     what={gone === ws.root ? t("session.folder_gone_remove_from_list", { name: ws.name }) : t("session.remove_name_from_the_list", { name: ws.name })}
