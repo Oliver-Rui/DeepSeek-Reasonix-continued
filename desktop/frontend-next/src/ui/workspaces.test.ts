@@ -1,6 +1,27 @@
 import { describe, expect, it } from "vitest";
+import type { TreeWorkspace } from "../port/hub";
 import { newlyDone } from "./Workspaces";
 import { removeHint } from "./WorkspaceConfirm";
+import { workspaceGroups } from "./workspaceGroups";
+
+describe("the tree's two groups", () => {
+  const ws = (root: string, remembered?: boolean): TreeWorkspace => ({ root, name: root, remembered, sessions: [] });
+  type Case = [string, TreeWorkspace[], { projects: string[]; tasks: string[] }];
+  const split = (groups: { projects: TreeWorkspace[]; tasks: TreeWorkspace[] }) => ({
+    projects: groups.projects.map((x) => x.root),
+    tasks: groups.tasks.map((x) => x.root),
+  });
+
+  it.each<Case>([
+    ["keeps each run in the order the tree gave it", [ws("/auto"), ws("/a", true), ws("/w", false), ws("/b", true)], { projects: ["/a", "/b"], tasks: ["/auto", "/w"] }],
+    ["draws no projects group over a tree of only the window's folder", [ws("/auto")], { projects: [], tasks: ["/auto"] }],
+    ["draws no task group when every folder was chosen", [ws("/a", true), ws("/b", true)], { projects: ["/a", "/b"], tasks: [] }],
+    ["answers two empty groups for an empty tree", [], { projects: [], tasks: [] }],
+    ["reads a missing remembered flag as the window's own folder", [ws("/w")], { projects: [], tasks: ["/w"] }],
+  ])("%s", (_name, tree, want) => {
+    expect(split(workspaceGroups(tree))).toEqual(want);
+  });
+});
 
 describe("removeHint", () => {
   it("says only what is true when nothing is open", () => {
