@@ -32,8 +32,10 @@ export function PeerThreadsProvider({ port, hub, onOpen, children }: {
   return <PeerThreadsContext.Provider value={value}>{children}</PeerThreadsContext.Provider>;
 }
 
-function wording(th: PeerThread): string {
-  const p = { title: th.title, project: th.project };
+/** The state of one exchange, as the person here reads it. `name` lets a caller
+ *  show the role the sender opened the session under instead of its title. */
+export function wording(th: PeerThread, name = th.title): string {
+  const p = { title: name, project: th.project };
   switch (th.state) {
     case "waiting": return t("remote.sent_to_title_project_waiting", p);
     case "working": return t("remote.title_project_accepted_it_and", p);

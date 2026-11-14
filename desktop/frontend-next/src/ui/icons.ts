@@ -14,6 +14,7 @@ const LABEL: Record<string, string> = {
   // Checked against the kernel's registered names, not guessed: these all ship
   // and were rendering as their raw id under a default icon.
   delete_range: "chat.delete_content", delete_symbol: "chat.delete_symbol", move_file: "chat.move_file",
+  dispatch_to_project: "chat.dispatch_task",
   notebook_edit: "chat.edit_notebook", submit_plan: "chat.submit_plan", ask: "chat.ask_user",
   fleet: "chat.parallel_tasks", read_only_task: "chat.read_only_task", read_subagent_result: "chat.read_subtask_result",
   complete_subtask: "chat.complete_subtask", lsp_diagnostics: "chat.code_diagnostics",

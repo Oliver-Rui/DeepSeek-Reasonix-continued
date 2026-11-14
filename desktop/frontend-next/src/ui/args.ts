@@ -1,11 +1,16 @@
-const ARG_KEYS = ["command", "path", "file_path", "pattern", "query", "url", "description", "prompt", "step_id", "name"];
+const ARG_KEYS = ["command", "path", "file_path", "pattern", "query", "url", "description", "prompt", "step_id", "name", "project", "role"];
 
 export function shortArgs(raw: string) {
   if (!raw) return "";
-  const pick = (o: unknown): string => {
-    if (!o || typeof o !== "object") return "";
-    const rec = o as Record<string, unknown>;
-    for (const k of ARG_KEYS) {
+    const pick = (o: unknown): string => {
+      if (!o || typeof o !== "object") return "";
+      const rec = o as Record<string, unknown>;
+      // A dispatch names the session it opened: the project, with the role the
+      // session was opened under beside it.
+      if (typeof rec.project === "string" && rec.project && typeof rec.role === "string" && rec.role) {
+        return `${rec.project} · ${rec.role}`.replace(/\s+/g, " ").slice(0, 96);
+      }
+      for (const k of ARG_KEYS) {
       const v = rec[k];
       if (typeof v === "string" && v) return v.replace(/\s+/g, " ").slice(0, 96);
     }
