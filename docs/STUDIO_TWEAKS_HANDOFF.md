@@ -392,19 +392,17 @@ rework, so each diff was applied and its conflicts resolved by hand:
 
 ## 8. The rename fold, and 2.62.0 / 2.63.0 as two releases
 
-The repo is renamed Oliver-Rui/DeepSeek-Reasonix-torch and the history around the rename
-is folded: the four rename commits and the two intro drafts no longer stand as commits —
-their net diff rides the final intro commit (`docs(readme): the fork is
-DeepSeek-Reasonix-torch…`), and the chain replays from the anchor `55bd05f` through the
-Git Data API so the pushed SHAs stay identical to the local ones.
+The repo is renamed Oliver-Rui/DeepSeek-Reasonix-torch and its history is folded: the
+rename commits and intro drafts ride the final intro commit (`docs(readme): the fork is
+DeepSeek-Reasonix-torch…`), and the chain replays from anchor `55bd05f` through the Git
+Data API so the pushed SHAs stay identical.
 
-The release notes follow the two-release shape again: `release-notes/studio/2.62.0.md` is
-back with its commit refs remapped to the rewritten SHAs, and `2.63.0.md` now tells only
-its own release — the session-lands-first flow, the dated task archive, first-turn
-naming, the loopback provider grant, the FuchaZ trims, the QQ group line and the rename.
+The release notes follow the two-release shape: `release-notes/studio/2.62.0.md`
+is back with its refs remapped to the rewritten SHAs, and `2.63.0.md` tells only its
+own release — the session-lands-first flow, dated task archive, first-turn naming,
+the loopback grant, the FuchaZ trims, the QQ line and the rename.
 
-Releases, in order: restore `studio-v2.62.0` on the rewritten chain (tag on the commit
-that completes the 2.62.0 feature set, release body from its notes, the original
-`dist/ReasonixStudio-windows-amd64-installer.exe` re-attached), then tag `studio-v2.63.0`
-on the notes commit, let the Studio CI build that installer, and publish with the
-artifact attached.
+Releases, in order: `studio-v2.62.0` tags the commit that completes the 2.62.0 set
+and is built by dispatching the current workflow onto that tag (its tree predates the
+publish gate); `studio-v2.63.0` tags the notes commit and builds from the tag push.
+Both publish with the CI-built installer attached.
