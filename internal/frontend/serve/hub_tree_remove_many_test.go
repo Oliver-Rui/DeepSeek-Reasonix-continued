@@ -272,3 +272,29 @@ func (b runningPaneRunner) Run(_ context.Context, _ string) error {
 	<-b.release
 	return nil
 }
+
+// Task conversations file themselves by date (…/sessions/2026/11/14/), and the
+// removal boundary is the sessions tree, not its front door: a dated transcript
+// deletes like a flat one.
+func TestRemoveSessionsDeletesADatedTaskSession(t *testing.T) {
+	t.Setenv("REASONIX_HOME", testenv.TempDir(t))
+	root := testenv.TempDir(t)
+	h := NewHub(HubOptions{})
+	hubRuntime(t, h, root)
+	srv := httptest.NewServer(operatorHandler(h))
+	defer srv.Close()
+
+	dated := filepath.Join(SessionDirFor(root), "2026", "11", "15")
+	path := filepath.Join(dated, "task.jsonl")
+	writeSessionAt(t, path)
+
+	resp := postRemoveSessions(t, srv, []string{path})
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusNoContent {
+		b, _ := readAllString(resp)
+		t.Fatalf("POST /tree/sessions/remove-many = %d, want 204 for a dated task session: %s", resp.StatusCode, b)
+	}
+	if _, err := os.Stat(path); !os.IsNotExist(err) {
+		t.Fatalf("the dated transcript survived: %v", err)
+	}
+}

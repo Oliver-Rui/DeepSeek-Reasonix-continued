@@ -215,3 +215,24 @@ func TestArchiveLegacyRecoveryRowKeepsAnOpenSiblingActive(t *testing.T) {
 	}
 	t.Fatalf("open sibling did not stay active: %+v", tree)
 }
+
+// Archiving walks the same boundary as removal: a task conversation filed
+// under a dated directory is inside the workspace's sessions tree, and the
+// archive touches visibility only — the file stays where it was written.
+func TestArchiveSessionAcceptsADatedTaskSession(t *testing.T) {
+	t.Setenv("REASONIX_HOME", testenv.TempDir(t))
+	root := testenv.TempDir(t)
+	h := NewHub(HubOptions{})
+	hubRuntime(t, h, root)
+	srv := httptest.NewServer(operatorHandler(h))
+	defer srv.Close()
+
+	dated := filepath.Join(SessionDirFor(root), "2026", "11", "15")
+	path := filepath.Join(dated, "task.jsonl")
+	writeSessionAt(t, path)
+
+	archiveTreeSession(t, srv, path, true)
+	if _, err := os.Stat(path); err != nil {
+		t.Fatalf("archiving must not move or delete the transcript: %v", err)
+	}
+}
