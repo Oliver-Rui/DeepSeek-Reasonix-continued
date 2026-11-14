@@ -81,9 +81,6 @@ interface Props {
   onExtSubmit: (pluginId: string, surfaceId: string, values: Record<string, unknown>) => void | Promise<void>;
   // The checkpoint each user card can return to, keyed by item id. Absent for a
   // card whose turn could not be matched — see state/checkpoints.
-  needsProject: boolean;
-  onOpenProject: () => void;
-  onKeepHere: () => void;
   onSuggest?: (text: string) => void;
   foldWork?: boolean;
   turnRunning?: boolean;
@@ -103,7 +100,7 @@ interface Props {
   brought?: { ids: string[]; bring: (id: string) => void; dismiss: (id: string) => void };
 }
 
-export function Transcript({ items: every, port, historyPaging, entering, onEntered, brought, revision, waiting, scroll, hidden, focus, find, query, onApprove, onFullAccess, onPlan, onAnswer, onForget, onSettings, onExtInvoke, onExtSubmit, reply, onResend, onWithdraw, takeovers = {}, checkpoints, onPrepareRewind, onCommitRewind, onPrepareFileRevert, onCommitFileRevert, needsProject, onOpenProject, onKeepHere, onSuggest, foldWork = false, turnRunning = false, scope = "" }: Props) {
+export function Transcript({ items: every, port, historyPaging, entering, onEntered, brought, revision, waiting, scroll, hidden, focus, find, query, onApprove, onFullAccess, onPlan, onAnswer, onForget, onSettings, onExtInvoke, onExtSubmit, reply, onResend, onWithdraw, takeovers = {}, checkpoints, onPrepareRewind, onCommitRewind, onPrepareFileRevert, onCommitFileRevert, onSuggest, foldWork = false, turnRunning = false, scope = "" }: Props) {
   // A block the selection touches must not leave the DOM. Unmounting the node a
   // selection is anchored to makes the browser remap that selection onto
   // whatever is still mounted — which reads as "I selected up there and the
@@ -490,7 +487,7 @@ export function Transcript({ items: every, port, historyPaging, entering, onEnte
         <HistoryPageControl paging={historyPaging} load={loadOlder} />
         {earlierBar}
         {items.length === 0 && !historyPaging?.hasMore && !historyPaging?.busy && !historyPaging?.failed && (
-          <Hero needsProject={needsProject} onOpen={onOpenProject} onKeep={onKeepHere} onSuggest={onSuggest} />
+          <Hero onSuggest={onSuggest} />
         )}
         {blocks.map((block, i) => (
           <Block

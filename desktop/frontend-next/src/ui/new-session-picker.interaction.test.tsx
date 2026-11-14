@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "./testkit";
 import { App } from "./App";
@@ -8,16 +8,17 @@ import { MockHub } from "../port/mock_hub";
 
 afterEach(cleanup);
 
-// The second folder the fixture remembers. Picking it is what the session's
-// root has to be; anything else opened first would be the picker guessing.
+// The second folder the fixture remembers; the per-project 新建 names it.
 const SECOND = "~/projects/my-website";
 
-// Every rootless 新建会话 goes through the picker now: nothing opens until a
-// row answers, and the escape row is the one answer that names no folder —
-// hub.open then hears a request with no root at all, which is the kernel's
-// contract for its own auto workspace. The per-project 新建 in the tree is the
-// one entry that bypasses the picker, because its row already names a project.
-describe("the new-session project picker", () => {
+// The picker that used to stand between 新建会话 and the kernel is gone: every
+// rootless entry — the sidebar's head button, the palette command, the panes
+// area's own button — opens the pane at once and sends no root at all, which is
+// the kernel's contract for its own auto workspace. The fixture then lands the
+// pane in its first folder, so the claim here is the request shape, not the
+// folder it resolved to. The per-project 新建 in the tree was never gated and
+// still names its root.
+describe("every rootless 新建会话 entry opens the pane directly", () => {
   let hub: MockHub;
   let asked: (string | undefined)[];
 
@@ -43,52 +44,41 @@ describe("the new-session project picker", () => {
   });
 
   // The head button is the one 新建会话 with no folder of its own to belong to.
-  async function openPicker(user: ReturnType<typeof userEvent.setup>) {
+  it("opens a session with no root at all from the head button", async () => {
+    const user = userEvent.setup();
     render(<App hub={hub} />);
     await screen.findByRole("combobox", { name: "任务输入" });
+
     const head = document.querySelector(".studio-rail-head") as HTMLElement;
     await user.click(within(head).getByRole("button", { name: /新建会话/ }));
-    return screen.findByRole("dialog", { name: "选择项目" });
-  }
-
-  it("asks which project before any session opens, and lists the remembered ones", async () => {
-    const user = userEvent.setup();
-    const picker = await openPicker(user);
-
-    expect(asked).toEqual([]);
-    expect(within(picker).getByRole("button", { name: /DeepSeek-Reasonix/ })).toBeTruthy();
-    expect(within(picker).getByRole("button", { name: /my-website/ })).toBeTruthy();
-  });
-
-  it("opens a session in the project the picked row names", async () => {
-    const user = userEvent.setup();
-    const picker = await openPicker(user);
-
-    await user.click(within(picker).getByRole("button", { name: /my-website/ }));
-    await waitFor(() => expect(asked).toEqual([SECOND]));
+    await waitFor(() => expect(asked).toEqual([undefined]));
+    expect(await screen.findByRole("combobox", { name: "任务输入" })).toBeTruthy();
     expect(screen.queryByRole("dialog", { name: "选择项目" })).toBeNull();
   });
 
-  it("opens a session with no root at all from 不在项目中工作", async () => {
-    const user = userEvent.setup();
-    const picker = await openPicker(user);
+  it("opens a session with no root at all from the palette command", async () => {
+    render(<App hub={hub} />);
+    await screen.findByRole("combobox", { name: "任务输入" });
 
-    await user.click(within(picker).getByRole("button", { name: "不在项目中工作" }));
+    await act(async () => void fireEvent.keyDown(window, { key: "k", code: "KeyK", ctrlKey: true }));
+    const palette = await screen.findByRole("dialog", { name: "搜索与快捷操作" });
+    await userEvent.click([...palette.querySelectorAll("button")].find((b) => b.textContent?.includes("新建会话"))!);
     await waitFor(() => expect(asked).toEqual([undefined]));
+    expect(screen.queryByRole("dialog", { name: "选择项目" })).toBeNull();
   });
 
-  it("hands 创建项目 to the folder adder, and the session opens through it", async () => {
-    const user = userEvent.setup();
-    hub.pickFolder = async () => "/work/picked-project";
-    const added = vi.spyOn(hub, "addWorkspace");
-    const picker = await openPicker(user);
+  it("opens a session with no root at all from the panes area", async () => {
+    hub.runtimes = async () => [];
+    const { container } = render(<App hub={hub} />);
+    await screen.findByText("没有打开的会话");
 
-    await user.click(within(picker).getByRole("button", { name: "创建项目" }));
-    await waitFor(() => expect(added).toHaveBeenCalledWith("/work/picked-project"));
-    await waitFor(() => expect(asked).toEqual(["/work/picked-project"]));
+    const empty = container.querySelector<HTMLElement>(".panes-empty")!;
+    await act(async () => { empty.querySelector<HTMLButtonElement>('button[data-action="session.new"]')!.click(); });
+    await waitFor(() => expect(asked).toEqual([undefined]));
+    expect(screen.queryByRole("dialog", { name: "选择项目" })).toBeNull();
   });
 
-  it("does not open the picker for the per-project 新建 in the tree", async () => {
+  it("does not gate the per-project 新建 in the tree", async () => {
     const user = userEvent.setup();
     render(<App hub={hub} />);
     await screen.findByRole("combobox", { name: "任务输入" });

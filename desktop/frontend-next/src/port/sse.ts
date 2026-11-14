@@ -349,6 +349,11 @@ export class SsePort extends SseTerminal implements AgentPort {
     return this.post("/workspace", { path });
   }
 
+  setWorkspaceAuto(): Promise<string> {
+    return this.post0<{ workspaceRoot?: string }>("/workspace", { auto: true })
+      .then((res) => res.workspaceRoot ?? "");
+  }
+
   isolateWorkspace(selection?: import("./workspace").WorktreeSelection) {
     return this.post("/workspace", { isolate: true, worktree: selection });
   }

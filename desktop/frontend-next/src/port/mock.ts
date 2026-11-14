@@ -13,6 +13,11 @@ import { MEMORIES, mockMemoryCatalog } from "./mock_memory";
 import { mockModels } from "./mock_models";
 import { mockUploadUsage, mockUsage } from "./mock_usage";
 
+// Where the fixture's rootless sessions land: the kernel keeps its auto
+// workspace under its own state directory, so a pane working there belongs to
+// no project the tree remembers.
+const AUTO_WORKSPACE = "~/workspaces/auto";
+
 export class MockPort extends MockWorkspace implements AgentPort {
   private listeners = new Set<(ev: WireEvent) => void>();
   private log: WireEvent[] = [];
@@ -58,13 +63,9 @@ export class MockPort extends MockWorkspace implements AgentPort {
 
   private session: SessionEntry | null = null;
 
-  async providerSetup(): Promise<ProviderSetup | null> {
-    return this.machine.configured ? null : { required: true, provider: "deepseek", model: "deepseek-v4-pro", keyEnv: "DEEPSEEK_API_KEY" };
-  }
+  async providerSetup(): Promise<ProviderSetup | null> { return this.machine.configured ? null : { required: true, provider: "deepseek", model: "deepseek-v4-pro", keyEnv: "DEEPSEEK_API_KEY" }; }
 
-  async saveProviderKey(_apiKey: string) {
-    this.machine.configured = true;
-  }
+  async saveProviderKey(_apiKey: string) { this.machine.configured = true; }
 
   // The subagent runs somewhere cheaper; everything else rides the main model.
   private assigned: RoleAssignments = {
@@ -77,9 +78,7 @@ export class MockPort extends MockWorkspace implements AgentPort {
     efforts: {},
   };
 
-  async roles(): Promise<RoleAssignments> {
-    return this.assigned;
-  }
+  async roles(): Promise<RoleAssignments> { return this.assigned; }
 
   async setRole(role: string, ref: string, effort?: string) {
     if (role === "web_search") {
@@ -91,17 +90,14 @@ export class MockPort extends MockWorkspace implements AgentPort {
 
   overrides: Record<string, RoleOverride[]> = {};
 
-  async roleOverrides(): Promise<Record<string, RoleOverride[]>> {
-    return this.overrides;
-  }
+  async roleOverrides(): Promise<Record<string, RoleOverride[]>> { return this.overrides; }
 
   async clearRoleOverride(role: string, key: string) {
     this.overrides = { ...this.overrides, [role]: (this.overrides[role] ?? []).filter((o) => o.key !== key) };
   }
 
   async models(answers: "chat" | "decision" | "all" = "chat"): Promise<ModelEntry[]> {
-    const efforts = ["auto", "low", "high", "max"];
-    return mockModels(efforts)
+    return mockModels(["auto", "low", "high", "max"])
       .filter((m) => answers === "all" || (m.answers ?? "chat") === answers)
       .map((m) => ({ ...m, default: m.ref === this.defaultRef }));
   }
@@ -216,20 +212,23 @@ export class MockPort extends MockWorkspace implements AgentPort {
     throw new Error("没有内核，无法登录");
   }
 
-  async accountPoll(): Promise<{ status: "pending" | "complete" }> {
-    return { status: "pending" };
-  }
+  async accountPoll(): Promise<{ status: "pending" | "complete" }> { return { status: "pending" }; }
 
   async accountLogout(): Promise<void> {}
 
-  async workspaces(): Promise<WorkspaceInfo> {
-    return mockWorkspaces(this.state.workspaceRoot ?? "");
-  }
+  async workspaces(): Promise<WorkspaceInfo> { return mockWorkspaces(this.state.workspaceRoot ?? ""); }
 
   async setWorkspace(path: string) {
     this.state.workspaceRoot = path;
     this.state.cwd = path;
     await this.newSession();
+  }
+
+  // The kernel answers a rootless open with its own auto workspace, and the
+  // same answer to {auto:true}: a folder the project tree never remembers.
+  async setWorkspaceAuto(): Promise<string> {
+    await this.setWorkspace(AUTO_WORKSPACE);
+    return this.state.workspaceRoot ?? "";
   }
 
   async worktreeSources(): Promise<import("./workspace").WorktreeSources> {

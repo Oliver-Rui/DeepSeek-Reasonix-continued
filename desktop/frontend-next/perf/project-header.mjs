@@ -16,8 +16,11 @@ try {
     page.on("pageerror", (error) => failures.push(error.message));
     await page.goto(`${BASE}?pref=zh&turns=3`, { waitUntil: "networkidle" });
     const add = page.locator('.projects-header [data-action="workspace.add"]');
+    const select = page.locator('.projects-header [data-action="session.selection"]');
     const filter = page.locator('.projects-header .session-filter-trigger');
-    const fold = page.locator('.projects-header [data-action="workspace.fold-all"]');
+    // Folding a whole group left the header toolbar: it lives on the tree's
+    // own group heads now, the projects head (项目 ⌄) being that run's fold-all.
+    const fold = page.locator('.rail [data-action="workspace.fold-all"][data-value="projects"]');
     await add.waitFor();
     await page.addStyleTag({ content: "*{transition:none!important;animation:none!important}" });
     const paint = (control) => control.evaluate((button) => {
@@ -28,17 +31,37 @@ try {
     const rest = await paint(add);
     await add.hover();
     const addHover = await paint(add);
+    check(`${scheme}: the header icon actions visibly highlight on hover`,
+      addHover.fill !== rest.fill && addHover.ink !== rest.ink);
+    await page.mouse.move(900, 500);
+    const selectRest = await paint(select);
+    await select.hover();
+    const selectHover = await paint(select);
+    check(`${scheme}: project header icon actions have the same hover fill and ink`,
+      selectHover.fill === addHover.fill && selectHover.ink === addHover.ink
+        && selectHover.fill !== selectRest.fill,
+      JSON.stringify({ add: addHover, select: selectHover }));
+    await page.mouse.move(900, 500);
+    const foldRest = await paint(fold);
     await fold.hover();
     const foldHover = await paint(fold);
-    check(`${scheme}: the header icon actions visibly highlight on hover`,
-      addHover.fill !== rest.fill && foldHover.fill !== rest.fill);
-    check(`${scheme}: project header icon actions have the same hover fill and ink`,
-      addHover.fill === foldHover.fill && addHover.ink === foldHover.ink,
-      JSON.stringify({ add: addHover, fold: foldHover }));
+    check(`${scheme}: the projects group head visibly highlights on hover`,
+      foldHover.ink !== foldRest.ink, JSON.stringify({ head: { rest: foldRest, hover: foldHover } }));
+    check(`${scheme}: the projects group head is the run's fold-all`,
+      (await fold.getAttribute("aria-label")) === "收起所有项目" && (await fold.getAttribute("aria-expanded")) === "true");
+    // The head folds the local run; SSH rows keep their own folds.
+    const localKids = page.locator('.rail .wsnode:not(:has(.rmtwsrow)) .kids');
+    const remoteRow = page.locator('.rail .wsrow.rmtwsrow[aria-expanded]').first();
+    const localKidCount = await localKids.count();
     await fold.click();
-    check(`${scheme}: the fold action collapses every project`, await fold.getAttribute("aria-expanded") === "false");
+    check(`${scheme}: the fold head collapses the local projects and leaves SSH rows to their own folds`,
+      await fold.getAttribute("aria-expanded") === "false"
+        && localKidCount > 0 && await localKids.count() === 0
+        && await remoteRow.getAttribute("aria-expanded") === "true");
     await fold.click();
-    check(`${scheme}: and expands them again`, await fold.getAttribute("aria-expanded") === "true");
+    check(`${scheme}: and expands them again`,
+      await fold.getAttribute("aria-expanded") === "true"
+        && await localKids.count() === localKidCount);
     await add.focus();
     await page.keyboard.press("Shift+Tab");
     await page.keyboard.press("Tab");

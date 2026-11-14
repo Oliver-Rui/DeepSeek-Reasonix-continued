@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, expect, it } from "vitest";
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import "./testkit";
 import { App } from "./App";
 import { MockHub } from "../port/mock_hub";
@@ -72,11 +72,9 @@ it("offers a new session in the main area when there are no folders", async () =
   expect(start).toBeTruthy();
   expect(empty.querySelector('button[data-action="workspace.add"]')).toBeTruthy();
 
+  // The pane opens at once and the open asks for no root at all — the kernel
+  // answers with its own auto workspace, which is what the prompt says.
   await act(async () => { start!.click(); });
-  // 新建会话 asks which project first; with no folders the picker still offers
-  // the escape, and 不在项目中工作 is the answer that sends no root — the
-  // session then opens in the app's own workspace, as the prompt says.
-  await screen.findByRole("dialog", { name: "选择项目" });
-  await act(async () => { screen.getByRole("button", { name: "不在项目中工作" }).click(); });
-  expect(opened).toEqual([{ root: undefined }]);
+  await waitFor(() => expect(opened).toEqual([{ root: undefined }]));
+  expect(screen.queryByRole("dialog", { name: "选择项目" })).toBeNull();
 });

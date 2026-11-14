@@ -130,6 +130,18 @@ export const ACTIONS: UIAction[] = [
   { id: "workspace.source-select", kind: "view", target: "none", proof: "interaction" },
   { id: "workspace.source-open", kind: "view", target: "none", proof: "interaction" },
   { id: "workspace.worktree-toggle", kind: "view", target: "none", proof: "interaction" },
+  // The composer's project pill: which project this session belongs to. A pick
+  // repoints the pane's kernel at that folder with a fresh conversation — the
+  // old transcript stays in the old project — and the row without a folder
+  // asks for the kernel's own auto workspace. Which project rides on
+  // data-target, absent for the auto workspace.
+  { id: "workspace.project", kind: "kernel-mutation", target: "optional", proof: "interaction" },
+  // The pill's 添加新项目: the submenu opens the two ways in, and the blank one
+  // makes an empty, named folder inside the folder the picker returned.
+  { id: "workspace.add-menu", kind: "view", target: "none", proof: "interaction" },
+  { id: "workspace.add-existing", kind: "kernel-mutation", target: "none", proof: "authority-effect" },
+  { id: "workspace.add-blank", kind: "view", target: "none", proof: "interaction" },
+  { id: "workspace.create", kind: "kernel-mutation", target: "none", proof: "authority-effect" },
   { id: "workspace.search", kind: "view", target: "none", proof: "interaction" },
   { id: "session.filter", kind: "view", target: "none", proof: "interaction" },
   { id: "session.more", kind: "repeatable", target: "none", proof: "interaction" },

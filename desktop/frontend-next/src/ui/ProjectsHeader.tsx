@@ -17,7 +17,7 @@ export function ProjectsHeader({ adder }: {
     <div className="projects-header">
       <div className="projects-tabs">
         <div className="vtabs" role="group" aria-label={t("session.session_view")}>
-          <button type="button" className="vtab" data-action="session.view" data-value="projects" aria-pressed="true">{t("common.project")}</button>
+          <button type="button" className="vtab" data-action="session.view" data-value="projects" aria-pressed="true">{t("session.task_list")}</button>
         </div>
         <span className="projects-spacer" />
         {filter}

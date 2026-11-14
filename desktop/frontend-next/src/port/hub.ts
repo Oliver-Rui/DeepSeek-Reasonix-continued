@@ -122,6 +122,9 @@ export interface TreeWorkspace {
   // True when the user chose this folder. A window always has a root — the one
   // it happened to launch in — and only this tells that apart from a project.
   remembered?: boolean;
+  // True for the app's own folder, where a conversation with no project lands:
+  // the sidebar draws it as the 任务 group, never as a project row.
+  auto?: boolean;
   // Every conversation the folder lists, loaded or not, and how many of those
   // are archived. `sessions` is only the newest of them; a kernel that predates
   // paging sends neither, and then `sessions` is all there is.
@@ -207,7 +210,9 @@ export interface HubPort extends SharePort {
   /** Conversations, in every workspace, that say these words. */
   searchHistory(query: string): Promise<HistorySearch>;
   onTreeChanged(listener: () => void): () => void;
-  addWorkspace(path: string): Promise<TreeWorkspace>;
+  /** Remember a folder, or — with `name` — create that empty folder inside it
+   *  first: a blank project is a chosen, empty folder, then remembered. */
+  addWorkspace(path: string, name?: string): Promise<TreeWorkspace>;
   removeWorkspace(path: string): Promise<void>;
   /** Show a listed project's folder in the system file manager. */
   revealWorkspace(path: string): Promise<void>;
@@ -389,8 +394,8 @@ export class SseHub implements HubPort {
     return this.get<HistorySearch>("/history/search?q=" + encodeURIComponent(query));
   }
 
-  addWorkspace(path: string) {
-    return this.post<TreeWorkspace>("/tree/workspaces", { path });
+  addWorkspace(path: string, name?: string) {
+    return this.post<TreeWorkspace>("/tree/workspaces", { path, name: name ?? "" });
   }
 
   async revealWorkspace(path: string) {

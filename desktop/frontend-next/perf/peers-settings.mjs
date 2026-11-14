@@ -30,7 +30,7 @@ for (const scheme of ["light", "dark"]) {
       return { btn: btn?.textContent ?? "", note: note?.textContent ?? "", described: btn?.getAttribute("aria-describedby") === note?.id, spill, scroll: bar.scrollWidth - bar.clientWidth };
     });
     check(`${tag}: the held message offers to remember its project`, /记住项目「[^」]+」/.test(held.btn), held.btn);
-    check(`${tag}: it says where the choice is kept and undone`, held.note.includes("设置 → 会话间消息") && held.note.includes("/"), held.note.slice(0, 40));
+    check(`${tag}: it says where the choice is kept and undone`, held.note.includes("设置 → 会话互聊") && held.note.includes("/"), held.note.slice(0, 40));
     check(`${tag}: the note is tied to the button`, held.described);
     check(`${tag}: nothing in the held bar spills sideways`, !held.spill && held.scroll <= 1, `${held.scroll}px`);
     if (shotDir && width === 1280) await page.locator(".compose").screenshot({ path: `${shotDir}/${scheme}-held.png` });
@@ -40,14 +40,22 @@ for (const scheme of ["light", "dark"]) {
     // settings.section, but the sheet reads its section once at mount, so a
     // sidebar row clicked while it is open would navigate nothing.
     const section = (value) => page.evaluate((v) => document.querySelector(`.prefs-nav [role="tab"][data-action="settings.section"][data-value="${v}"]`)?.click(), value);
-    await page.waitForSelector('.prefs-nav [role="tab"][data-action="settings.section"][data-value="tools"]');
+    await page.waitForSelector('.prefs-nav [role="tab"][data-action="settings.section"][data-value="peers"]');
+    // 会话互聊 is a first-class section now, not an index row folded into the
+    // agent page: its own tab carries the group, and the agent page's index
+    // no longer names it.
+    const peersTab = page.locator('.prefs-nav [role="tab"][data-action="settings.section"][data-value="peers"]');
+    check(`${tag}: session messages have a settings section of their own`,
+      (await peersTab.textContent())?.includes("会话互聊"), await peersTab.textContent());
     await section("session");
-    await page.waitForSelector('[data-action="settings.page-index"][data-target="peers"]');
-    check(`${tag}: session messages have a settings entry of their own`, (await page.locator('[data-action="settings.page-index"][data-target="peers"]').count()) === 1);
+    await page.waitForSelector('.prefs-main[data-sec="session"]');
+    check(`${tag}: and are no longer an index row on the agent page`,
+      (await page.locator('[data-action="settings.page-index"][data-target="peers"]').count()) === 0);
     await section("tools");
     await page.waitForSelector('.prefs-main[data-sec="tools"]');
     check(`${tag}: and no longer sit at the foot of tools and permissions`, (await page.locator('.prefs-main[data-sec="tools"] [role="switch"][aria-label="启用会话间消息"]').count()) === 0);
-    await section("session");
+    await section("peers");
+    await page.waitForSelector('.prefs-main[data-sec="peers"]');
     await page.locator('[data-action="settings.page-index"][data-target="peers"]').click();
     await page.waitForSelector('[role="switch"][aria-label="启用会话间消息"]', { timeout: 8000 });
     const s = await page.evaluate(() => {

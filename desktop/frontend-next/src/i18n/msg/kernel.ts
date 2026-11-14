@@ -546,6 +546,8 @@ export const KERNEL: Messages = {
   "kernel.the_price_for_model_must": { zh: "{model} 的价格必须是不小于 0 的数字，并选择货币", en: "The price for {model} must be a number not below 0, with a currency chosen" },
   "kernel.the_progress_settings_were_not": { zh: "无进展设置未能保存：{detail}", en: "The progress settings were not saved: {detail}" },
   "kernel.the_project_folder_is_no": { zh: "项目文件夹已不在磁盘上。", en: "The project folder is no longer on disk." },
+  "kernel.a_folder_with_that_name": { zh: "那个位置已有一个同名文件，换一个项目名。", en: "A file with that name is already there; pick another project name." },
+  "kernel.that_name_cannot_be_a": { zh: "这个名字不能作为文件夹名。", en: "That name cannot be a folder name." },
   "kernel.the_project_list_is_at": { zh: "项目列表已到你设置的上限（desktop.max_workspaces），请先移除一个项目再添加", en: "The project list is at the limit you set (desktop.max_workspaces); remove one before adding another" },
   "kernel.the_provider_did_not_answer": { zh: "服务商没有及时应答，请稍后重试", en: "The provider did not answer in time — try again shortly" },
   "kernel.the_provider_errored_http_status": { zh: "服务商返回错误（HTTP {status}），与填写内容无关，请稍后重试", en: "The provider errored (HTTP {status}) — nothing you typed is wrong; try again shortly" },

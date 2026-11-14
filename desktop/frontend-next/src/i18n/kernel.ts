@@ -226,6 +226,8 @@ const SAID: Record<string, string> = {
   "backup.limit_reached": "kernel.the_backup_limit_is_reached",
   "backup.consent_required": "kernel.some_items_run_programs_here",
   "workspace.limit_reached": "kernel.the_project_list_is_at",
+  "workspace.name_taken": "kernel.a_folder_with_that_name",
+  "workspace.bad_name": "kernel.that_name_cannot_be_a",
   "provider.bad_model_price": "kernel.the_price_for_model_must",
   "provider.model_prices_unlisted": "kernel.model_is_not_one_of_2",
   "provider.bad_price_source": "kernel.the_source_of_the_price",
