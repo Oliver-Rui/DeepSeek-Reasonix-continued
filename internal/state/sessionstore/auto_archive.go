@@ -36,7 +36,7 @@ func ArchiveInactiveSessions(dir string, now time.Time, idle time.Duration, hold
 	}
 	archived := 0
 	var errs error
-	eachSessionDir(dir, func(sub string, entries []os.DirEntry) {
+	walkErr := eachSessionDir(dir, func(sub string, entries []os.DirEntry) {
 		for _, e := range entries {
 			name := e.Name()
 			if e.IsDir() || !store.IsSessionTranscriptName(name) || store.IsSubagentTranscriptName(name) {
@@ -66,9 +66,10 @@ func ArchiveInactiveSessions(dir string, now time.Time, idle time.Duration, hold
 				archived++
 			case !errors.Is(err, errNotInactive):
 				errs = errors.Join(errs, err)
+			}
 		}
-	}
 	})
+	errs = errors.Join(errs, walkErr)
 	return archived, errs
 }
 

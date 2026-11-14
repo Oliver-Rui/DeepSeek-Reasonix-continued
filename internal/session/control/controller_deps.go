@@ -78,7 +78,7 @@ type controllerDeps struct {
 	// datedSessions files this controller's fresh transcripts by date
 	// (…/2026/11/14) instead of flat in the session folder — the task area's
 	// conversations read back as a calendar. See freshPath.
-	datedSessions       bool
+	datedSessions bool
 	// skills owns the session's discovered skills (enabled subset, full set, and
 	// the reloadable stores) — the skills slice of the Capabilities concern. See
 	// skill.go.

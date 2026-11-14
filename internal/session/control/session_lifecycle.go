@@ -674,6 +674,7 @@ func (c *Controller) rotateSessionTemp() {
 	}
 	c.sessionTemp.Rotate()
 }
+
 // SetDatedSessionPaths turns on date-nested fresh transcripts (…/2026/11/14)
 // for this controller. Only the task area asks for it: a project's sessions
 // stay flat beside their siblings, where every tool that names a folder
