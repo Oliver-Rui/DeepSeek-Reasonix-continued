@@ -124,8 +124,9 @@ describe("the composer's project pill", () => {
     render(<App hub={hub} />);
     await screen.findByRole("combobox", { name: "任务输入" });
     // The pill is the fresh conversation's guide: a pane that has already
-    // said something is placed, wherever it lives, and shows no guide.
-    expect(pillQuery()).toBeNull();
+    // said something is placed, wherever it lives, and shows no guide. The
+    // content flag rides the status read, so its departure is awaited.
+    await waitFor(() => expect(pillQuery()).toBeNull());
     expect(screen.queryByRole("dialog", { name: "会话所属项目" })).toBeNull();
   });
 
