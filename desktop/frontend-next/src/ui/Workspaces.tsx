@@ -441,6 +441,7 @@ function WorkspacesView({ hub, tree, treeRead, answered = null, runtimes, active
                       checked={visible.length > 0 && visible.every((s) => selection.has(s.path))}
                       onClick={(ev) => ev.stopPropagation()} onChange={() => pickProject(ws)} />}
                     <WsMark open={hasChildren ? !shut : undefined} />
+                    <StudioIcon name="folder" />
                     <span className="wsname ds-title" title={ws.root}>
                       {ws.name}
                     </span>
