@@ -22,12 +22,13 @@ const NAME: Record<string, string> = { all: "common.all", live: "plan.step.now",
 export function SessionFilter({ scope, counts, onScope }: { scope: SessionScope; counts: ScopeCounts; onScope: (next: SessionScope) => void }) {
   const sort = useSyncExternalStore(onRecencySortChange, recencySort, recencySort);
   const scopes = ["all", "live", "waiting", "unread", "pinned", "archived"] as const;
-  // The arrow is always there so the row never looks like plain text: up is
-  // newest first, down is oldest first, and ⇅ means unsorted.
+  // The arrow rides the label, not the count column: the menu's right edge is
+  // numbers only — every other row counts something, and 最近 orders instead.
+  // Up is newest first, down is oldest first, and ⇅ means unsorted.
+  const arrow = sort === "newest" ? "↑" : sort === "oldest" ? "↓" : "⇅";
   const order: MenuItem = {
     value: "recent",
-    label: t("session.sort_by_recent"),
-    right: sort === "newest" ? "↑" : sort === "oldest" ? "↓" : "⇅",
+    label: `${t("session.sort_by_recent")} ${arrow}`,
   };
   const items: MenuItem[] = scopes.flatMap((value) => {
     const row: MenuItem = {
