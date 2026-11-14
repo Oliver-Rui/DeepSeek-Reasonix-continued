@@ -44,4 +44,5 @@ export const INTENTS: readonly (readonly [string, readonly string[]])[] = [
   ["定时任务", ["scheduled-runs"]],
   ["提示词", ["persona"]],
   ["卡顿", ["graphics", "effects", "live-stream-budget"]],
+  ["会话互聊", ["peers"]],
 ];

@@ -22,7 +22,7 @@ describe("the index at the top of a settings page", () => {
 
   it("goes to the setting that was pressed, with the entry it was drawn from", async () => {
     const go = vi.fn();
-    const items = entries("session");
+    const items = entries("peers");
     render(<PageIndex items={items} onGo={go} />);
     const peers = items.find((e) => e.anchor === "peers")!;
     await userEvent.click(document.querySelector(`[data-target="peers"]`) as HTMLElement);

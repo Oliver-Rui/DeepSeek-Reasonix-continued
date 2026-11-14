@@ -2,6 +2,7 @@ import { SCHEDULE_ACTIONS } from "./actions_schedule";
 import { DOCUMENT_ACTIONS } from "./actions_document";
 import { FEEDBACK_ACTIONS } from "./actions_feedback";
 import { WORKBENCH_ACTIONS } from "./actions_workbench";
+import { PEERS_ACTIONS } from "./actions_peers";
 
 // The census oracle is independent of production literals so disagreements fail.
 // An id names the intent; data-target and data-value name its entity and choice.
@@ -728,6 +729,7 @@ export const ACTIONS: UIAction[] = [
   { id: "peers.release-add", kind: "kernel-mutation", target: "none", proof: "authority-effect" },
   { id: "peers.release-pick", kind: "view", target: "none", proof: "interaction" },
   { id: "peers.deny", kind: "kernel-mutation", target: "none", proof: "authority-effect" },
+  ...PEERS_ACTIONS,
   // Read by the running turn at its next round, so no rebuild stands between the
   // click and the canonical change.
   { id: "auto-archive.notice-dismiss", kind: "view", target: "none", proof: "interaction" },

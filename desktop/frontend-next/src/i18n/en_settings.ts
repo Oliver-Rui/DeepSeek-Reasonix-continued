@@ -45,7 +45,6 @@ export const EN_SETTINGS: Record<string, string> = {
   "要发的内容": "Message",
   "写下要告诉另一个会话的话。对方的用户批准后，它才会交给那边的模型。": "Write what to tell the other session. It reaches that session\u2019s model only after its user approves.",
   "发送中…": "Sending\u2026",
-  "会话间消息（实验）": "Messages between sessions (experimental)",
   "会话间消息": "Session messages",
   "放行的项目": "Projects allowed through",
   "放行这个项目": "Allow this project through",

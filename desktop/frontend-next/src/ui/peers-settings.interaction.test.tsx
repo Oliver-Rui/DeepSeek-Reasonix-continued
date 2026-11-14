@@ -25,7 +25,7 @@ afterEach(() => {
 });
 
 const settings = (over: Partial<PeersSettings> = {}): PeersSettings => ({
-  enabled: false, dispatch: false, release_projects: [], max_dispatch_depth: 1, max_dispatched_sessions: 8, open_nested: false, incoming: "dispatch", path: "/home/me/.reasonix/config.toml", applies: "next_turn", pending: false, available: true, ...over,
+  enabled: false, dispatch: false, release_projects: [], max_dispatch_depth: 1, max_dispatched_sessions: 8, open_nested: false, incoming: "dispatch", cross_project: "always", path: "/home/me/.reasonix/config.toml", applies: "next_turn", pending: false, available: true, ...over,
 });
 
 function portWith(initial: PeersSettings) {
@@ -38,6 +38,7 @@ function portWith(initial: PeersSettings) {
       enabled: edit.enabled ?? current.enabled,
       dispatch: edit.dispatch ?? current.dispatch,
       open_nested: edit.open_nested ?? current.open_nested,
+      cross_project: edit.cross_project ?? current.cross_project,
       incoming: edit.incoming ?? current.incoming,
       release_projects: edit.release_projects ? current.release_projects.filter((p) => edit.release_projects!.includes(p.path)) : current.release_projects,
       pending: true,
@@ -133,7 +134,7 @@ describe("remembering a project when a held message is let through", () => {
     render(<HeldPeerMessage port={port} held={held} project={project} onDone={() => {}} />);
     expect(screen.getByRole("button", { name: /批准并记住项目「site」/ })).toBeTruthy();
     expect(screen.getByText(/\/work\/site/)).toBeTruthy();
-    expect(screen.getByText(/设置 → 会话间消息/)).toBeTruthy();
+    expect(screen.getByText(/设置 → 会话互聊/)).toBeTruthy();
   });
 
   it("approves once without remembering anything by default", async () => {
@@ -186,5 +187,36 @@ describe("what another session may send", () => {
     render(<Messages port={port} />);
     const group = await screen.findByRole("radiogroup", { name: /别的会话发来时|another session writes/ });
     expect(within(group).getAllByRole("radio")[0]!.getAttribute("aria-checked")).toBe("true");
+  });
+});
+
+describe("what the model may hand across projects", () => {
+  it("offers the three answers, saves the one that is picked, and shows it in force", async () => {
+    const { port, save } = portWith(settings({ enabled: true, dispatch: true }));
+    render(<Messages port={port} />);
+    const group = await screen.findByRole("radiogroup", { name: /跨项目派发|Cross-project dispatch/ });
+    const answers = within(group).getAllByRole("radio");
+    expect(answers.map((b) => b.getAttribute("data-value"))).toEqual(["always", "paired", "never"]);
+    expect(answers[0]!.getAttribute("aria-checked")).toBe("true");
+    await userEvent.click(answers[1]!);
+    expect(save).toHaveBeenCalledExactlyOnceWith({ cross_project: "paired" });
+    await waitFor(() => expect(within(group).getAllByRole("radio")[1]!.getAttribute("aria-checked")).toBe("true"));
+  });
+
+  it("shows which answer is in force", async () => {
+    const { port } = portWith(settings({ enabled: true, dispatch: true, cross_project: "never" }));
+    render(<Messages port={port} />);
+    const group = await screen.findByRole("radiogroup", { name: /跨项目派发|Cross-project dispatch/ });
+    expect(within(group).getAllByRole("radio")[2]!.getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("holds the seg inert until the model may hand off tasks", async () => {
+    const { port, save } = portWith(settings({ enabled: true, dispatch: false }));
+    render(<Messages port={port} />);
+    const group = await screen.findByRole("radiogroup", { name: /跨项目派发|Cross-project dispatch/ });
+    const answers = within(group).getAllByRole("radio");
+    for (const b of answers) expect((b as HTMLButtonElement).disabled).toBe(true);
+    await userEvent.click(answers[2]!);
+    expect(save).not.toHaveBeenCalled();
   });
 });

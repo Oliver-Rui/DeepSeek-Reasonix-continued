@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { t } from "../i18n";
-import type { HubPort } from "../port/hub";
 import type { AgentPort } from "../port/port";
 import { AgentPresets } from "./AgentPresets";
 import { Hooks } from "./Hooks";
@@ -8,17 +7,13 @@ import { Group } from "./Group";
 import { ScheduledRuns } from "./ScheduledRuns";
 import { ApplyNote } from "./Group";
 import { AskTimeout } from "./AskTimeout";
-import { PeersSection } from "./PeersSection";
 import { PlanApproval } from "./PlanApproval";
 import { ProgressWatch } from "./ProgressWatch";
 import { SectionCard } from "./SectionCard";
-import { SessionRef } from "./SessionRef";
-import { SubagentClaims } from "./SubagentClaims";
 import { TurnNarrationSetting } from "./TurnNarrationSetting";
 
 interface Props {
   port: AgentPort;
-  hub: Pick<HubPort, "tree">;
   persona: boolean;
   onPersona: () => void;
   onChanged: () => void;
@@ -37,7 +32,7 @@ function useAutomationCounts(port: AgentPort) {
   return counts;
 }
 
-export function AgentSettings({ port, hub, persona, onPersona, onChanged }: Props) {
+export function AgentSettings({ port, persona, onPersona, onChanged }: Props) {
   const counts = useAutomationCounts(port);
   const hooksHint = t("settings.hooks_hint") + (counts.hooks ? ` · ${t("settings.n_hooks", { n: counts.hooks })}` : "");
   const runsHint = t("settings.scheduled_runs_hint") + (counts.schedules
@@ -63,11 +58,6 @@ export function AgentSettings({ port, hub, persona, onPersona, onChanged }: Prop
         <AskTimeout port={port} />
         <TurnNarrationSetting port={port} />
         <ProgressWatch port={port} />
-      </SectionCard>
-      <SectionCard title={t("settings.collaboration")}>
-        <SessionRef port={port} />
-        <SubagentClaims port={port} onChanged={onChanged} />
-        <PeersSection port={port} hub={hub} />
       </SectionCard>
       <SectionCard title={t("settings.automation")}>
         <Group id="hooks" title={t("settings.hooks")} hint={hooksHint}>
