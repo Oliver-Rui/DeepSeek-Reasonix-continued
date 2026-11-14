@@ -1,10 +1,11 @@
 name: Auto-label issues
 
-# Classify new issues into area / platform / severity labels using the DeepSeek
-# API (the project's own model). The model is constrained to a fixed label set —
-# anything it returns outside the set is dropped — so it can't invent labels.
-# Issues it can't place into any area get `needs-triage` for a human to look at.
-# Version (v1/v2) labels are handled separately by issue-version-label.yml.
+# Classify new issues into area / platform / severity labels through the Z.ai
+# GLM endpoint (the model family the project is developed with). The model is
+# constrained to a fixed label set — anything it returns outside the set is
+# dropped — so it can't invent labels. Issues it can't place into any area get
+# `needs-triage` for a human to look at. Version (v1/v2) labels are handled
+# separately by issue-version-label.yml.
 on:
   issues:
     types: [opened, reopened]
@@ -20,9 +21,23 @@ jobs:
   classify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+      # The classification runs on the Z.ai route, so a repository without the
+      # key skips instead of failing: the labels come back the day the key
+      # lands.
+      - id: gate
+        run: |
+          if [ -z "${{ secrets.ZAI_API_KEY }}" ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::ZAI_API_KEY is not set on this repository; issue auto-labeling is skipped. Set it to a Z.ai API key to enable it."
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.gate.outputs.run == 'true'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         env:
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          ZAI_API_KEY: ${{ secrets.ZAI_API_KEY }}
+          AGENT_MODEL: ${{ vars.AGENT_MODEL }}
         with:
           script: |
             const AREA = ['agent','mcp','config','updater','provider','desktop','tui','skills','rendering'];
@@ -58,14 +73,14 @@ jobs:
 
             let labels = [];
             try {
-              const res = await fetch('https://api.deepseek.com/chat/completions', {
+              const res = await fetch('https://api.z.ai/api/paas/v4/chat/completions', {
                 method: 'POST',
                 headers: {
-                  'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+                  'Authorization': `Bearer ${process.env.ZAI_API_KEY}`,
                   'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                  model: 'deepseek-chat',
+                  model: process.env.AGENT_MODEL || 'glm-4.6',
                   temperature: 0,
                   response_format: { type: 'json_object' },
                   messages: [
@@ -75,7 +90,7 @@ jobs:
                 }),
               });
               if (!res.ok) {
-                core.warning(`DeepSeek API ${res.status}: ${await res.text()}`);
+                core.warning(`Model route ${res.status}: ${await res.text()}`);
                 return;
               }
               const data = await res.json();

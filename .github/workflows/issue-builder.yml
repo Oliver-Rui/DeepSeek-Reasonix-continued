@@ -1,0 +1,63 @@
+name: Issue builder
+
+# A labeled issue becomes a pull request. Comment `@builder` on an issue (or
+# add the `agent:build` label) and a coding agent works the request on its own
+# branch and opens a PR back, running on the Z.ai GLM endpoint — the same
+# model family the project is developed with, reachable from GitHub's runners
+# without any tunnel (the maintainer's Magpie route is local-only; if it ever
+# gains a public address, point MAGPIE_BASE_URL at it instead).
+#
+# Gated twice, like the rest of the automation: only the owner, members and
+# collaborators may call it, and the job no-ops while ZAI_API_KEY is unset —
+# set that secret (plus the AGENT_MODEL variable if you want a model other
+# than glm-4.6) and the builder wakes up unchanged.
+
+on:
+  issue_comment:
+    types: [created]
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: issue-builder-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: >-
+      (github.event_name == 'issue_comment' &&
+       contains(github.event.comment.body, '@builder') &&
+       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)) ||
+      (github.event_name == 'issues' && github.event.label.name == 'agent:build' &&
+       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.sender.author_association))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Gate on the model key
+        id: gate
+        run: |
+          if [ -z "${{ secrets.ZAI_API_KEY }}" ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::ZAI_API_KEY is not set on this repository; the issue builder is skipped. Set it to a Z.ai API key, then comment @builder on an issue."
+          else
+            echo "model=${{ vars.AGENT_MODEL || 'glm-4.6' }}" >> "$GITHUB_OUTPUT"
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.gate.outputs.run == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - if: steps.gate.outputs.run == 'true'
+        uses: anthropics/claude-code-action@v1 # pin to a tagged SHA after the first green run
+        with:
+          anthropic_base_url: https://api.z.ai/api/anthropic
+          anthropic_token: ${{ secrets.ZAI_API_KEY }}
+          trigger_phrase: '@builder'
+          label_trigger: 'agent:build'
+          claude_args: '--model ${{ steps.gate.outputs.model }} --max-turns 60'
