@@ -23,6 +23,8 @@ export interface SessionMenuProps {
   onBranch?: () => void;
   onCopyInfo: () => void;
   onExport: (format: "json" | "md") => void;
+  /** Starts picking conversations with this one already chosen; the batch bar takes over from there. */
+  onBatchSelect: (session: TreeSession) => void;
   onDelete: () => void;
   /** One place up or down in the project list; absent where the row has no order to move in. */
   onMove?: (direction: -1 | 1) => void;
@@ -38,7 +40,7 @@ export interface SessionMenuProps {
  *  sidebar's clipping cannot cut it. Every action closes the menu itself:
  *  the parent's handlers do that, this only says which one was chosen. */
 export const SessionMenu = forwardRef<HTMLDivElement, SessionMenuProps>(function SessionMenu(
-  { session, label, live, pinned, exporting, autoNaming, onPin, onMarkRead, onRename, onAutoName, onPause, onClose, onArchive, onBranch, onCopyInfo, onExport, onDelete, onMove, canMove, onMoveTo, keptCount = 0, keptOpen, onKept },
+  { session, label, live, pinned, exporting, autoNaming, onPin, onMarkRead, onRename, onAutoName, onPause, onClose, onArchive, onBranch, onCopyInfo, onExport, onBatchSelect, onDelete, onMove, canMove, onMoveTo, keptCount = 0, keptOpen, onKept },
   ref,
 ) {
   const target = session.path;
@@ -99,6 +101,12 @@ export const SessionMenu = forwardRef<HTMLDivElement, SessionMenuProps>(function
           <button role="menuitem" aria-label={`${t("session.export_session")} · Markdown`} data-action="session.export" data-value="md" data-target={target} disabled={exporting} onClick={() => onExport("md")}>Markdown</button>
           <button role="menuitem" aria-label={`${t("session.export_session")} · JSON`} data-action="session.export" data-value="json" data-target={target} disabled={exporting} onClick={() => onExport("json")}>JSON</button>
         </div>
+      </div>
+      <div className="session-pop-divider" />
+      <div className="session-pop-group">
+        <button role="menuitem" data-action="session.selection" data-value="start" data-target={target} onClick={() => onBatchSelect(session)}>
+          <StudioIcon name="check" /><span>{t("session.batch_select_sessions")}</span>
+        </button>
       </div>
       <div className="session-pop-divider" />
       <div className="session-pop-group">

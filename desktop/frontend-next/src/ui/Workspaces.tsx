@@ -34,7 +34,8 @@ import type { WorkspacesProps } from "./workspaceprops";
 import { SessionBatch, useSelectedRows } from "./SessionBatch";
 import { ProjectsHeader } from "./ProjectsHeader";
 import { WorkspaceGroupHead } from "./WorkspaceGroupHeaders";
-import { workspaceGroups, groupFold } from "./workspaceGroups";
+import { workspaceGroups, groupFold, togglePath, pickVisible } from "./workspaceGroups";
+import { workspaceRemoval } from "./workspaceRemove";
 import { useWorkspaceDrag } from "./useWorkspaceDrag";
 import { SessionTail } from "./SessionAge";
 import { SessionArchiveAction, SessionMoreAction, SessionPinAction } from "./SessionRowActions";
@@ -63,12 +64,7 @@ function WorkspacesView({ hub, tree, treeRead, answered = null, runtimes, active
   const askedByKey = useRef("");
   const needle = useRailQuery();
   useEffect(() => { setSelection((current) => current === null ? null : new Set()); }, [needle, scope]);
-  const toggleSelection = (path: string) => setSelection((current) => {
-    if (!current) return current;
-    const next = new Set(current);
-    if (next.has(path)) next.delete(path); else next.add(path);
-    return next;
-  });
+  const toggleSelection = (path: string) => setSelection((current) => togglePath(current, path));
   const treeKeys = useTreeKeys();
   const mutations = useSessionMutation(onError);
   const [editing, setEditing] = useState("");
@@ -183,6 +179,10 @@ function WorkspacesView({ hub, tree, treeRead, answered = null, runtimes, active
     return runtimes.filter((rt) => !rt.host && (workspace ? workspaceContains(workspace, rt.root) : rt.root === root)).map((rt) => rt.id);
   };
 
+  const { removeWorkspaceNow, removeAll: removeWorkspaces } = workspaceRemoval({
+    hub, tree, panesOf, liveIds, onClose, reload, onError,
+  });
+
   const dropWorkspace = async (ws: TreeWorkspace) => {
     if (confirm !== ws.root) {
       setGone("");
@@ -192,12 +192,7 @@ function WorkspacesView({ hub, tree, treeRead, answered = null, runtimes, active
     setConfirm("");
     setGone("");
     try {
-      // Closed here for the same reason dropSession does it: the kernel will not
-      // pull a folder out from under a pane that is writing, and leaving that to
-      // the reader only means asking which of eight tabs belong to this one.
-      const open = panesOf(ws.root);
-      if (open.length && liveIds(open).length === 0) await onClose(open);
-      await hub.removeWorkspace(ws.root);
+      await removeWorkspaceNow(ws);
       await reload();
     } catch (e) {
       onError(e);
@@ -333,17 +328,7 @@ function WorkspacesView({ hub, tree, treeRead, answered = null, runtimes, active
     ? ws.sessions : ws.sessions.filter((session, index) => index < previewLimit || session.runtimeId === active || session.path === opening);
   /** The project row's checkbox is the folder, not a fold control: picking it
    *  picks every row the folder shows, and picking it again clears them. */
-  const pickProject = (ws: TreeWorkspace) => setSelection((current) => {
-    if (!current) return current;
-    const rows = visibleSessions(ws);
-    const next = new Set(current);
-    const all = rows.length > 0 && rows.every((row) => next.has(row.path));
-    for (const row of rows) {
-      if (all) next.delete(row.path);
-      else next.add(row.path);
-    }
-    return next;
-  });
+  const pickProject = (ws: TreeWorkspace) => setSelection((current) => pickVisible(current, visibleSessions(ws)));
   // Draw order: the chosen folders as one run, the window's own folder after it.
   const groups = workspaceGroups(shownTree);
   const ordered = [...groups.projects, ...groups.tasks];
@@ -356,23 +341,26 @@ function WorkspacesView({ hub, tree, treeRead, answered = null, runtimes, active
     .flatMap(visibleSessions);
   const selected = useSelectedRows(displayed, selection, setSelection);
   const otherRows = hasOtherRows ? hasOtherRows(needle, hideLegacy) : !!children;
+  // The projects a person chose, named for the batch bar's one removal question.
+  const rememberedProjects = tree.filter((w) => w.remembered).map((w) => ({ root: w.root, name: w.name }));
 
   return (
     <>
       {moveTo.dialog}
       <SessionBatch hub={hub} selection={selection} selected={selected} displayed={displayed} onSelect={setSelection}
         onExit={() => {
-          // Back to the control that started the selection. When every project
-          // is folded that control has nothing to offer, so it is disabled and
-          // cannot take focus; the list's own way in does.
-          const entry = document.querySelector<HTMLElement>('[data-action="session.selection"][data-value="start"]');
+          // Back to the tree's own standing control. The menu entries that
+          // start picking live inside closed menus, so the head is the way in;
+          // when every project is folded it still answers, and the add button
+          // takes the keyboard if the head has nothing to offer.
+          const entry = document.querySelector<HTMLElement>('[data-action="workspace.fold-all"][data-value="projects"]');
           const target = entry && !entry.hasAttribute("disabled") ? entry : document.querySelector<HTMLElement>('[data-action="workspace.add"]');
           target?.focus();
         }}
         onBusy={(pending) => { setBusy(pending ? "batch" : ""); if (pending) { setSessionMenu(""); setEditing(""); setConfirm(""); } }}
-        onClose={onClose} onArchive={onArchive} liveIds={liveIds} reload={reload} onError={onError} />
-      <ProjectsHeader adder={adder}
-        onSelect={() => setSelection(new Set())} selecting={selection !== null} canSelect={displayed.length > 0} />
+        onClose={onClose} onArchive={onArchive} rememberedProjects={rememberedProjects} onRemoveWorkspaces={removeWorkspaces}
+        liveIds={liveIds} reload={reload} onError={onError} />
+      <ProjectsHeader adder={adder} />
       <div className="scroll">
         <div role="tree" aria-label={t("session.projects_and_conversations")} aria-multiselectable={selection !== null} inert={busy === "batch"} data-action-keydown="tree.navigate" ref={treeKeys.ref} onKeyDown={treeKeys.onKeyDown}>
           {ordered.map((ws, at) => {
@@ -385,14 +373,13 @@ function WorkspacesView({ hub, tree, treeRead, answered = null, runtimes, active
             // Only while the question is on screen: panesOf walks every runtime.
             const doomed = confirm === ws.root ? panesOf(ws.root) : [];
             const busyPanes = liveIds(doomed).length;
-            // ordered runs the projects first, so each label lands on its run's first row.
-            const opensProjects = at === 0 && groups.projects.length > 0;
-            const opensTasks = at === groups.projects.length;
             return (
               <div className="wsnode" key={ws.root} data-current={panesOf(ws.root).includes(active) ? "" : undefined} data-missing={ws.missing ? "" : undefined}>
-                {opensProjects && <WorkspaceGroupHead group="projects" folded={projectsFold.folded} canFold={projectsFold.canFold} searching={searching}
+                {/* Each label sits on its run's first row: 项目 above the projects,
+                    任务 above the folder the window itself opened in. */}
+                {at === 0 && groups.projects.length > 0 && <WorkspaceGroupHead group="projects" folded={projectsFold.folded} canFold={projectsFold.canFold} searching={searching}
                   onToggle={onFoldGroup && (() => onFoldGroup(projectsFold.roots, !projectsFold.folded))} />}
-                {opensTasks && <WorkspaceGroupHead group="tasks" folded={tasksFold.folded} canFold={tasksFold.canFold} searching={searching}
+                {at === groups.projects.length && <WorkspaceGroupHead group="tasks" folded={tasksFold.folded} canFold={tasksFold.canFold} searching={searching}
                   onToggle={onFoldGroup && (() => onFoldGroup(tasksFold.roots, !tasksFold.folded))} />}
                 {confirm === ws.root ? (
                   <Confirm
@@ -509,6 +496,12 @@ function WorkspacesView({ hub, tree, treeRead, answered = null, runtimes, active
                         <WorkspaceReveal ws={ws} hub={hub} dismiss={dismissMenu} onError={onError} />
                         {ws.remembered && <WorkspaceOrder root={ws.root} position={tree.filter((w) => w.remembered).findIndex((w) => w.root === ws.root)} total={tree.filter((w) => w.remembered).length}
                           hub={hub} reload={reload} dismiss={dismissMenu} onError={onError} />}
+                        <div className="session-pop-group">
+                          <button role="menuitem" data-action="session.selection" data-value="start" disabled={visible.length === 0}
+                            onClick={() => { setSelection(new Set(visibleSessions(ws).map((s) => s.path))); dismissMenu(); }}>
+                            <StudioIcon name="check" /><span>{t("session.batch_select_sessions")}</span>
+                          </button>
+                        </div>
                         <div className="session-pop-group">
                           <button className="danger" role="menuitem" data-action="workspace.remove" onClick={() => { setConfirm(ws.root); dismissMenu(); }}>
                             <StudioIcon name="close" /><span>{t("common.remove_from_the_list")}</span><small>{t("common.keeps_files")}</small>
@@ -666,6 +659,7 @@ function WorkspacesView({ hub, tree, treeRead, answered = null, runtimes, active
                             onBranch={onBranch && session.runtimeId ? () => { setSessionMenu(""); void onBranch(session.runtimeId!, `${rowLabel(session)} · ${t("common.branch")}`).catch(onError); } : undefined}
                             onCopyInfo={() => { void copyText(sessionInfoText(session, session.workspaceRoot || ws.root)).catch(onError); setSessionMenu(""); }}
                             onExport={(format) => void saveSession(session, format)}
+                            onBatchSelect={(picked) => { setSessionMenu(""); setSelection(new Set([picked.path])); }}
                             keptCount={kept.length} keptOpen={open} onKept={() => { setSpread((prev) => { const next = new Set(prev); if (open) next.delete(session.path); else next.add(session.path); return next; }); setSessionMenu(""); }}
                             onDelete={() => { askDelete(session.path); setSessionMenu(""); }}
                             onMove={(direction) => { setSessionMenu(""); void order.move(session, direction); }}
@@ -762,6 +756,10 @@ function WorkspacesView({ hub, tree, treeRead, answered = null, runtimes, active
               </div>
             );
           })}
+          {/* The 任务 label stands even when nothing lives in it: the bar is the
+              standing answer to where a session outside any project would go. */}
+          {groups.tasks.length === 0 && groups.projects.length > 0 &&
+            <WorkspaceGroupHead group="tasks" folded={tasksFold.folded} searching={searching} />}
           {!otherRows && shownTree.length === 0 && (tree.length > 0 || treeRead && (!!needle || scope !== "all")) && <TreeEmpty settled={tree.every((ws) => ws.countsComplete !== false) && answers(answered, { scope: kernelScope, q: asked })} onRetry={retry} />}
           {tree.length === 0 && (!treeRead || !otherRows && !needle && scope === "all") && (treeRead ? (
             <div className="ws-empty">{t("session.no_folders_yet")}<button className="projects-open" data-action="workspace.add"

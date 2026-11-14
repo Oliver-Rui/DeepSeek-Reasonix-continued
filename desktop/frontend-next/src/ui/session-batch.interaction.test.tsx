@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import "./testkit";
-import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, expect, it, vi } from "vitest";
 import { Workspaces } from "./Workspaces";
@@ -16,8 +16,9 @@ const sessions: TreeSession[] = [
   { path: "/sessions/c.jsonl", name: "c", title: "Gamma", archived: true },
 ];
 
-function draw(rows = sessions, scope: "all" | "archived" = "all", folded = new Set<string>()) {
-  const hub = { removeSession: vi.fn().mockResolvedValue(undefined) };
+function draw(rows = sessions, scope: "all" | "archived" = "all", folded = new Set<string>(),
+  tree: TreeWorkspace[] = [{ root: "/w", name: "Project", remembered: true, sessions: rows }]) {
+  const hub = { removeSession: vi.fn().mockResolvedValue(undefined), removeWorkspace: vi.fn().mockResolvedValue(undefined) };
   const onArchive = vi.fn().mockResolvedValue(undefined);
   const onClose = vi.fn().mockResolvedValue(undefined);
   const onOpen = vi.fn().mockResolvedValue(undefined);
@@ -26,42 +27,84 @@ function draw(rows = sessions, scope: "all" | "archived" = "all", folded = new S
   const add = vi.fn();
   const reload = vi.fn().mockResolvedValue(undefined);
   let live: string[] = [];
-  const props = { hub: hub as never, tree: [{ root: "/w", name: "Project", sessions: rows }] as TreeWorkspace[],
-    treeRead: true, runtimes: [{ id: "r1" }] as never, active: "r1", folded, onFold: vi.fn(), reload,
+  const props = { hub: hub as never, tree, treeRead: true, runtimes: [{ id: "r1" }] as never, active: "r1", folded, onFold: vi.fn(),
+    // The window folds a whole group from its label; the harness keeps that
+    // set the way the rows' own chevrons read it.
+    onFoldGroup: (roots: string[], shut: boolean) => {
+      const next = new Set(props.folded);
+      for (const root of roots) { if (shut) next.add(root); else next.delete(root); }
+      props.folded = next;
+      view.rerender(<RailSearch><Workspaces {...props} /></RailSearch>);
+    },
+    reload,
     onOpen, onFocus, onClose, liveIds: (ids: string[]) => ids.filter((id) => live.includes(id)), runs: {},
     scope, onArchive, onRename: vi.fn(), onError, adder: { add, close: vi.fn(), at: null } as never };
   const view = render(<RailSearch><Workspaces {...props} /></RailSearch>);
-  return { hub, onArchive, onClose, onOpen, onFocus, onError, reload, add,
+  return { hub, onArchive, onClose, onOpen, onFocus, onError, reload, add, removeWorkspace: hub.removeWorkspace,
     live: (ids: string[]) => { live = ids; view.rerender(<RailSearch><Workspaces {...props}
       runs={Object.fromEntries(ids.map((id) => [id, { run: "running", live: true }]))} /></RailSearch>); },
     update: (tree: TreeWorkspace[]) => { props.tree = tree; view.rerender(<RailSearch><Workspaces {...props} /></RailSearch>); },
     fold: (roots: Set<string>) => { props.folded = roots; view.rerender(<RailSearch><Workspaces {...props} /></RailSearch>); } };
 }
 
-async function startSelection() {
-  await userEvent.click(screen.getByRole("button", { name: "选择本机会话" }));
+const projectRow = () =>
+  screen.getByText("Project", { selector: ".wsname" }).closest<HTMLElement>('[role="treeitem"]')!;
+
+// Picking starts from a row's right-click menu now — the header button is gone
+// on purpose — and the menu seeds the mode with the row that was clicked.
+async function startSelection(row = document.querySelector<HTMLElement>(".sessrow")!) {
+  fireEvent.contextMenu(row);
+  await userEvent.click(screen.getByRole("menuitem", { name: /批量选择会话/ }));
 }
 
 async function selectAll() {
   await startSelection();
-  await userEvent.click(screen.getByRole("button", { name: "全选当前显示的会话" }));
+  // A lone displayed row arrives all-chosen from its menu, and the toggle only
+  // exists while something on screen is still unpicked.
+  const toggle = screen.queryByRole("button", { name: "全选当前显示的会话" });
+  if (toggle) await userEvent.click(toggle);
 }
 
-it("keeps the batch entry in the project list header without occupying an idle toolbar", async () => {
+it("keeps the batch entries in the row menus without occupying an idle toolbar", async () => {
   draw();
   expect(document.querySelector(".session-batch-entry, .session-batch")).toBeNull();
-  // The entry is a header control beside the scope filter, not a row in a
-  // project's menu: picking conversations is about the whole list.
-  const entry = screen.getByRole("button", { name: "选择本机会话" });
+  // The header button is gone on purpose: picking starts from the tree's own
+  // right-click menus, so the idle toolbar keeps only the view, the filter and
+  // the way into a new project.
+  expect(screen.queryByRole("button", { name: "选择本机会话" })).toBeNull();
   expect(screen.queryByRole("menuitem", { name: "选择本机会话" })).toBeNull();
-  await userEvent.click(entry);
-  expect(screen.getByText("已选 0 个会话")).toBeTruthy();
-  expect(document.activeElement).toBe(screen.getByRole("button", { name: "完成选择" }));
+  // The project's menu offers the whole folder at once.
+  fireEvent.contextMenu(projectRow());
+  const fromProject = screen.getByRole("menuitem", { name: /批量选择会话/ });
+  expect(fromProject.getAttribute("data-action")).toBe("session.selection");
+  expect(fromProject.getAttribute("data-value")).toBe("start");
+  await userEvent.click(fromProject);
+  expect(screen.queryByRole("menu")).toBeNull();
+  expect(screen.getByText("已选 2 个会话")).toBeTruthy();
+  await userEvent.click(screen.getByRole("button", { name: "完成选择" }));
+  // The session's menu carries the same entry, seeded with the clicked row.
+  fireEvent.contextMenu(screen.getByRole("treeitem", { name: /Beta/ }));
+  await userEvent.click(screen.getByRole("menuitem", { name: /批量选择会话/ }));
+  expect(screen.getByText("已选 1 个会话")).toBeTruthy();
+  expect(document.activeElement).toBe(screen.getByRole("button", { name: "删除所选会话" }));
 });
 
-it.each([{ rows: [] }, { rows: sessions }])("disables selection when no local sessions are displayed: $rows", async ({ rows }) => {
-  draw(rows, "all", new Set(["/w"]));
-  expect((screen.getByRole("button", { name: "选择本机会话" }) as HTMLButtonElement).disabled).toBe(true);
+it("offers no batch entry where a folder shows nothing to pick", async () => {
+  draw([], "all", new Set(["/w"]));
+  fireEvent.contextMenu(projectRow());
+  expect((screen.getByRole("menuitem", { name: /批量选择会话/ }) as HTMLButtonElement).disabled).toBe(true);
+  expect(document.querySelector(".session-batch")).toBeNull();
+});
+
+it("starts from a folded folder with nothing the fold lets stay selected", async () => {
+  draw(sessions, "all", new Set(["/w"]));
+  fireEvent.contextMenu(projectRow());
+  await userEvent.click(screen.getByRole("menuitem", { name: /批量选择会话/ }));
+  expect(screen.queryByRole("menu")).toBeNull();
+  // The folder's entry still answers while folded, and the fold prunes what it
+  // seeded: a hidden row cannot stay picked.
+  expect(screen.getByText("已选 0 个会话")).toBeTruthy();
+  expect((screen.getByRole("button", { name: "删除所选会话" }) as HTMLButtonElement).disabled).toBe(true);
 });
 
 it("keeps opening projects and the list menu outside the project tree", async () => {
@@ -75,13 +118,18 @@ it("keeps opening projects and the list menu outside the project tree", async ()
 
 it("selects rows with clicks and the keyboard without opening or focusing a pane", async () => {
   const pane = draw();
-  await startSelection();
+  await startSelection(); // Alpha arrives chosen from its menu
   const alpha = screen.getByRole("treeitem", { name: /Alpha/ });
-  await userEvent.click(alpha);
   const beta = screen.getByRole("treeitem", { name: /Beta/ });
+  await userEvent.click(beta);
+  expect(alpha.getAttribute("aria-selected")).toBe("true");
+  expect(beta.getAttribute("aria-selected")).toBe("true");
+  expect(screen.getByText("已选 2 个会话")).toBeTruthy();
   beta.focus();
   await userEvent.keyboard(" ");
-  expect(alpha.getAttribute("aria-selected")).toBe("true");
+  expect(beta.getAttribute("aria-selected")).toBe("false");
+  expect(screen.getByText("已选 1 个会话")).toBeTruthy();
+  await userEvent.keyboard(" ");
   expect(beta.getAttribute("aria-selected")).toBe("true");
   expect(screen.getByText("已选 2 个会话")).toBeTruthy();
   await userEvent.dblClick(screen.getByText("Alpha"));
@@ -89,7 +137,9 @@ it("selects rows with clicks and the keyboard without opening or focusing a pane
   expect(pane.onOpen).not.toHaveBeenCalled();
   expect(pane.onFocus).not.toHaveBeenCalled();
   await userEvent.click(screen.getByRole("button", { name: "完成选择" }));
-  expect(document.activeElement).toBe(screen.getByRole("button", { name: "选择本机会话" }));
+  // The tree's own group label takes the keyboard back: the toolbar holds no
+  // entry for picking any more.
+  expect(document.activeElement).toBe(document.querySelector<HTMLElement>('[data-action="workspace.fold-all"][data-value="projects"]'));
   await userEvent.click(beta);
   expect(pane.onOpen).toHaveBeenCalledWith({ root: "/w", sessionPath: "/sessions/b.jsonl" });
 });
@@ -225,8 +275,8 @@ it("removes hidden selections when projects are folded", async () => {
   const pane = draw();
   await selectAll();
   pane.update([
-    { root: "/w", name: "Project", sessions },
-    { root: "/other", name: "Other", sessions: [{ path: "/sessions/d.jsonl", name: "Delta" }] },
+    { root: "/w", name: "Project", remembered: true, sessions },
+    { root: "/other", name: "Other", remembered: true, sessions: [{ path: "/sessions/d.jsonl", name: "Delta" }] },
   ]);
   pane.fold(new Set(["/w"]));
   expect(screen.getByText("已选 0 个会话")).toBeTruthy();
@@ -243,9 +293,9 @@ it("removes hidden selections when projects are folded", async () => {
   expect((screen.getByRole("button", { name: "删除所选会话" }) as HTMLButtonElement).disabled).toBe(true);
   expect(pane.onArchive).not.toHaveBeenCalled();
   await userEvent.click(screen.getByRole("button", { name: "完成选择" }));
-  // Every project is folded, so there is nothing left to select and the entry
-  // is disabled; focus lands on the list's own way in instead.
-  expect(document.activeElement).toBe(screen.getByRole("button", { name: "打开项目" }));
+  // Every project is folded, so picking keeps no hidden row; the tree's own
+  // 项目 label answers the keyboard whether the group is folded or not.
+  expect(document.activeElement).toBe(document.querySelector<HTMLElement>('[data-action="workspace.fold-all"][data-value="projects"]'));
 });
 
 it("selects every loaded row of a search matching the project name, and only those", async () => {
@@ -254,4 +304,111 @@ it("selects every loaded row of a search matching the project name, and only tho
   await selectAll();
   expect(screen.getByText("已选 35 个会话")).toBeTruthy();
   expect(screen.getByRole("treeitem", { name: /Task 34/ })).toBeTruthy();
+});
+
+it("says 全部选中 and 全部取消 for the rows on screen", async () => {
+  draw();
+  await startSelection();
+  expect(screen.getByText("全部选中")).toBeTruthy();
+  expect(screen.queryByText("全选可见")).toBeNull();
+  await userEvent.click(screen.getByRole("button", { name: "全选当前显示的会话" }));
+  expect(screen.getByText("全部取消")).toBeTruthy();
+  expect(screen.queryByText("取消全选")).toBeNull();
+});
+
+it("enters picking from a session's menu with that session already chosen", async () => {
+  const pane = draw();
+  const alpha = screen.getByRole("treeitem", { name: /Alpha/ });
+  fireEvent.contextMenu(alpha);
+  await userEvent.click(screen.getByRole("menuitem", { name: /批量选择会话/ }));
+  expect(screen.queryByRole("menu")).toBeNull();
+  expect(screen.getByText("已选 1 个会话")).toBeTruthy();
+  expect(alpha.getAttribute("aria-selected")).toBe("true");
+  expect(screen.getByRole("treeitem", { name: /Beta/ }).getAttribute("aria-selected")).toBe("false");
+  expect(pane.onOpen).not.toHaveBeenCalled();
+  expect(pane.onFocus).not.toHaveBeenCalled();
+});
+
+it("asks once and removes the selected sessions' projects from the list", async () => {
+  const rooted: TreeSession[] = [
+    { path: "/w/a.jsonl", name: "a", title: "Alpha", workspaceRoot: "/w" },
+    { path: "/v/b.jsonl", name: "b", title: "Beta", workspaceRoot: "/v" },
+  ];
+  const pane = draw(rooted, "all", new Set(), [
+    { root: "/w", name: "First", remembered: true, sessions: [rooted[0]!] },
+    { root: "/v", name: "Second", remembered: true, sessions: [rooted[1]!] },
+  ]);
+  await selectAll();
+  await userEvent.click(screen.getByRole("button", { name: "移除项目" }));
+  const question = screen.getByRole("alertdialog", { name: "从列表移除 2 个项目？" });
+  expect(within(question).getByText("First、Second")).toBeTruthy();
+  expect(within(question).getByText("项目与其中会话将从列表移除；会话记录仍保留在磁盘上。")).toBeTruthy();
+  expect(pane.removeWorkspace).not.toHaveBeenCalled();
+  expect(pane.hub.removeSession).not.toHaveBeenCalled();
+  await userEvent.click(within(question).getByRole("button", { name: "移除" }));
+  await waitFor(() => expect(pane.removeWorkspace).toHaveBeenCalledTimes(2));
+  expect(pane.removeWorkspace).toHaveBeenNthCalledWith(1, "/w");
+  expect(pane.removeWorkspace).toHaveBeenNthCalledWith(2, "/v");
+  expect(pane.reload).toHaveBeenCalledTimes(1);
+  expect(pane.onError).not.toHaveBeenCalled();
+});
+
+it("lets Escape leave every project in place", async () => {
+  const rooted: TreeSession[] = [
+    { path: "/w/a.jsonl", name: "a", title: "Alpha", workspaceRoot: "/w" },
+    { path: "/v/b.jsonl", name: "b", title: "Beta", workspaceRoot: "/v" },
+  ];
+  const pane = draw(rooted, "all", new Set(), [
+    { root: "/w", name: "First", remembered: true, sessions: [rooted[0]!] },
+    { root: "/v", name: "Second", remembered: true, sessions: [rooted[1]!] },
+  ]);
+  await selectAll();
+  await userEvent.click(screen.getByRole("button", { name: "移除项目" }));
+  expect(screen.getByRole("alertdialog", { name: "从列表移除 2 个项目？" })).toBeTruthy();
+  await userEvent.keyboard("{Escape}");
+  expect(screen.queryByRole("alertdialog")).toBeNull();
+  expect(pane.removeWorkspace).not.toHaveBeenCalled();
+  expect(pane.reload).not.toHaveBeenCalled();
+});
+
+it("keeps removing the other project when one is refused", async () => {
+  const rooted: TreeSession[] = [
+    { path: "/w/a.jsonl", name: "a", title: "Alpha", workspaceRoot: "/w" },
+    { path: "/v/b.jsonl", name: "b", title: "Beta", workspaceRoot: "/v" },
+  ];
+  const pane = draw(rooted, "all", new Set(), [
+    { root: "/w", name: "First", remembered: true, sessions: [rooted[0]!] },
+    { root: "/v", name: "Second", remembered: true, sessions: [rooted[1]!] },
+  ]);
+  pane.removeWorkspace.mockRejectedValueOnce(new Error("panes still running"));
+  await selectAll();
+  await userEvent.click(screen.getByRole("button", { name: "移除项目" }));
+  await userEvent.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "移除" }));
+  await waitFor(() => expect(pane.onError).toHaveBeenCalledExactlyOnceWith(expect.any(Error)));
+  expect(pane.removeWorkspace).toHaveBeenCalledTimes(2);
+  expect(pane.removeWorkspace).toHaveBeenNthCalledWith(2, "/v");
+  expect(pane.reload).toHaveBeenCalledTimes(1);
+});
+
+it("skips the project of a running session and removes the rest", async () => {
+  const rooted: TreeSession[] = [
+    { path: "/w/a.jsonl", name: "a", title: "Alpha", workspaceRoot: "/w", runtimeId: "r1" },
+    { path: "/v/b.jsonl", name: "b", title: "Beta", workspaceRoot: "/v" },
+  ];
+  const pane = draw(rooted, "all", new Set(), [
+    { root: "/w", name: "First", remembered: true, sessions: [rooted[0]!] },
+    { root: "/v", name: "Second", remembered: true, sessions: [rooted[1]!] },
+  ]);
+  await selectAll();
+  pane.live(["r1"]);
+  expect((screen.getByRole("button", { name: "归档所选会话" }) as HTMLButtonElement).disabled).toBe(true);
+  expect((screen.getByRole("button", { name: "删除所选会话" }) as HTMLButtonElement).disabled).toBe(true);
+  expect((screen.getByRole("button", { name: "移除项目" }) as HTMLButtonElement).disabled).toBe(false);
+  await userEvent.click(screen.getByRole("button", { name: "移除项目" }));
+  expect(screen.getByRole("alertdialog", { name: "从列表移除 1 个项目？" })).toBeTruthy();
+  await userEvent.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "移除" }));
+  await waitFor(() => expect(pane.removeWorkspace).toHaveBeenCalledTimes(1));
+  expect(pane.removeWorkspace).toHaveBeenCalledWith("/v");
+  expect(pane.reload).toHaveBeenCalledTimes(1);
+  await waitFor(() => expect(pane.onError).toHaveBeenCalledExactlyOnceWith(expect.any(Error)));
 });

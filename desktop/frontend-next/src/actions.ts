@@ -136,6 +136,9 @@ export const ACTIONS: UIAction[] = [
   { id: "session.selection", kind: "view", target: "optional", proof: "interaction" },
   { id: "session.batch-archive", kind: "kernel-mutation", target: "none", proof: "authority-effect" },
   { id: "session.batch-delete", kind: "destructive", target: "none", proof: "authority-effect" },
+  // Removing projects from the list keeps their transcripts on disk, but the
+  // panes it closes and the list it shortens are a person's to rebuild.
+  { id: "session.batch-remove", kind: "destructive", target: "none", proof: "authority-effect" },
   { id: "chrome.settings", kind: "navigation", target: "none", proof: "interaction" },
   { id: "browser.open", kind: "view", target: "none", proof: "interaction" },
   { id: "browser.full", kind: "view", target: "none", proof: "interaction" },

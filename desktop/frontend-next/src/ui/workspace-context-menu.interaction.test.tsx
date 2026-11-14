@@ -4,15 +4,15 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import userEvent from "@testing-library/user-event";
 import "./testkit";
 import { Workspaces } from "./Workspaces";
-import type { TreeWorkspace } from "../port/hub";
+import type { TreeSession, TreeWorkspace } from "../port/hub";
 
 vi.mock("../port/host", () => ({ host: () => ({ revealsFiles: () => true }) }));
 
 afterEach(cleanup);
 
-function draw(over: Partial<TreeWorkspace> = {}) {
+function draw(over: Partial<TreeWorkspace> = {}, sessions: Record<string, TreeSession[]> = {}) {
   const tree: TreeWorkspace[] = ["a", "b"].map((name) => ({
-    root: "/" + name, name, remembered: true, sessions: [], ...over,
+    root: "/" + name, name, remembered: true, sessions: sessions[name] ?? [], ...over,
   }));
   const revealWorkspace = vi.fn().mockResolvedValue(undefined);
   const moveWorkspace = vi.fn().mockResolvedValue(undefined);
@@ -101,4 +101,26 @@ it("keeps unavailable actions disabled and reports reveal failures", async () =>
   fireEvent.contextMenu(row("b"));
   await userEvent.click(screen.getByRole("menuitem", { name: /在文件管理器中显示/ }));
   await waitFor(() => expect(onError).toHaveBeenCalledExactlyOnceWith(refusal));
+});
+
+it("starts picking with the project's visible sessions from its menu", async () => {
+  const pane = draw({}, {
+    a: [{ path: "/a/x.jsonl", name: "x", title: "X" }, { path: "/a/y.jsonl", name: "y", title: "Y" }],
+    b: [{ path: "/b/z.jsonl", name: "z", title: "Z" }],
+  });
+  fireEvent.contextMenu(pane.row("a"));
+  await userEvent.click(screen.getByRole("menuitem", { name: /批量选择会话/ }));
+  expect(screen.queryByRole("menu")).toBeNull();
+  expect(screen.getByText("已选 2 个会话")).toBeTruthy();
+  expect(screen.getByRole("treeitem", { name: "X" }).getAttribute("aria-selected")).toBe("true");
+  expect(screen.getByRole("treeitem", { name: "Y" }).getAttribute("aria-selected")).toBe("true");
+  expect(screen.getByRole("treeitem", { name: "Z" }).getAttribute("aria-selected")).toBe("false");
+  expect(pane.onOpen).not.toHaveBeenCalled();
+});
+
+it("offers no batch entry for a project with nothing to pick", () => {
+  const pane = draw();
+  fireEvent.contextMenu(pane.row("a"));
+  expect((screen.getByRole("menuitem", { name: /批量选择会话/ }) as HTMLButtonElement).disabled).toBe(true);
+  expect(document.querySelector(".session-batch")).toBeNull();
 });
