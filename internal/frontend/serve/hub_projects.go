@@ -151,22 +151,9 @@ func (h *Hub) resolveRoot(req OpenRequest) (string, error) {
 			return root, nil
 		}
 	}
-	h.mu.RLock()
-	first := ""
-	if len(h.order) > 0 {
-		if rt := h.runtimes[h.order[0]]; rt != nil {
-			first = rt.Server.Controller().WorkspaceRoot()
-		}
-	}
-	h.mu.RUnlock()
-	if first != "" {
-		return first, nil
-	}
-	for _, dir := range LaunchWorkspaces() {
-		if projectDirectoryExists(dir) {
-			return dir, nil
-		}
-	}
+	// A brand-new conversation names no project: it opens in the app's own
+	// folder — the tree's 任务 group keeps it — instead of joining whichever
+	// pane happens to be open. The composer's pill moves it into a project.
 	if dir := ensureAutoWorkspace(); dir != "" {
 		return dir, nil
 	}

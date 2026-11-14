@@ -271,6 +271,7 @@ func runServeWithOptions(args []string, opts serveRunOptions) int {
 	tokenFile := fs.String("token-file", "", "read the auth=token pre-shared token from this file (overrides --token; keeps the secret out of argv)")
 	pidFile := fs.String("pid-file", "", "write the server process id to this file")
 	page := fs.String("page", "", "directory holding a built Studio page, served under /_studio/ (default: look beside the binary)")
+	allowSwitch := fs.Bool("workspace-switch", false, "let the Web UI move a session to another folder (POST /workspace)")
 	// The project this server works in. Every other verb takes it from the
 	// shared run flags; serve did not, and without it the only way to name a
 	// project was the process working directory.
@@ -412,9 +413,8 @@ func runServeWithOptions(args []string, opts serveRunOptions) int {
 		return 1
 	}
 
-	// A hub, so this frontend drives several sessions at once the way the studio
-	// window does. The session this command was started for is the first pane.
-	hub := serve.NewHub(serve.HubOptions{Serve: serveCfg, NativeSurfaces: true, DecorateSink: reporter.Wrap, ProviderResolver: providerResolver, Page: pageOrWarn(*page)})
+	// A hub drives several sessions at once the way the studio window does; this command's own session is its first pane.
+	hub := serve.NewHub(serve.HubOptions{Serve: serveCfg, NativeSurfaces: true, DecorateSink: reporter.Wrap, ProviderResolver: providerResolver, Page: pageOrWarn(*page), Grant: workspaceSwitchGrant(*allowSwitch)})
 	adoptFirstPane(hub, ctrl, bc, paneSink, serveCfg, leases)
 	return runServeFrontend(ctrl, hub, serveCfg, serveFrontendOptions{
 		command: opts.command, address: *addr,
@@ -423,6 +423,15 @@ func runServeWithOptions(args []string, opts serveRunOptions) int {
 		hasSession: *resume != "" || *sessionID != "",
 		publicURL:  *publicURL,
 	})
+}
+
+// workspaceSwitchGrant carries the --workspace-switch grant, or nil: switching
+// is the desktop window's own capability, held off until a host hands it out.
+func workspaceSwitchGrant(allow bool) func(*serve.Server) {
+	if !allow {
+		return nil
+	}
+	return func(srv *serve.Server) { srv.AllowWorkspaceSwitch() }
 }
 
 // applyServePassword settles password auth before anything is served: a

@@ -65,11 +65,13 @@ func (h *Hub) tree(w http.ResponseWriter, r *http.Request) {
 	for _, ref := range roots {
 		// Open means a pane is driving this folder — true from the moment one is
 		// opened, before its first turn has written a transcript to list.
+		auto := isAutoWorkspace(ref.root)
 		node := treeWorkspace{
 			Root: ref.root, Name: fileutil.RootName(ref.root),
 			WorkspaceRoots: ref.roots,
 			Isolated:       worktree.IsManagedPath(ref.root, config.DeliveryWorktreeDir()),
 			Remembered:     ref.remembered,
+			Auto:           auto,
 			Sessions:       []treeSession{},
 		}
 		for _, root := range ref.roots {
@@ -79,7 +81,9 @@ func (h *Hub) tree(w http.ResponseWriter, r *http.Request) {
 			node.Missing = true
 		}
 		page := h.projectPage(ref.roots, node.Name, open, window, window.limitFor(ref.root))
-		if !ref.remembered && !page.Said && (page.Status == nil || page.Status.CountsComplete) {
+		// The 任务 group is a standing section, so the app's own folder is listed
+		// even before anything was said in it — an unremembered project is not.
+		if !ref.remembered && !auto && !page.Said && (page.Status == nil || page.Status.CountsComplete) {
 			continue
 		}
 		node.Sessions, node.Total, node.Archived, node.Remaining = page.Sessions, page.Total, page.Archived, page.Remaining
@@ -380,6 +384,7 @@ func recoveryLineageRoot(si sessionstore.SessionInfo, byID map[string]sessionsto
 func (h *Hub) addWorkspace(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Path string `json:"path"`
+		Name string `json:"name"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		badBody(w)
@@ -389,6 +394,25 @@ func (h *Hub) addWorkspace(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		writeErr(w, http.StatusBadRequest, err)
 		return
+	}
+	// A named add makes the folder first: a blank project is an empty, chosen
+	// folder inside the one the picker returned, never a rename of it.
+	if name := strings.TrimSpace(body.Name); name != "" {
+		if strings.ContainsAny(name, `/\`) || name == "." || name == ".." {
+			refuse(w, http.StatusBadRequest, "workspace.bad_name", "that name cannot be a folder", nil)
+			return
+		}
+		created := filepath.Join(dir, name)
+		if st, statErr := os.Stat(created); statErr != nil {
+			if os.Mkdir(created, 0o755) != nil {
+				writeErr(w, http.StatusInternalServerError, errors.New("could not create the folder"))
+				return
+			}
+		} else if !st.IsDir() {
+			refuse(w, http.StatusConflict, "workspace.name_taken", "a file with that name is already there", nil)
+			return
+		}
+		dir = created
 	}
 	if err := addRememberedWorkspace(r.Context(), dir); err != nil {
 		if errors.Is(err, errWorkspaceListFull) {
@@ -647,6 +671,14 @@ func (h *Hub) roots() []rootRef {
 	}
 	for _, rt := range h.localRuntimes() {
 		add(rt.Server.Controller().WorkspaceRoot())
+	}
+	// The app's own folder stands in the tree once it exists, pane or no pane:
+	// the 任务 group holds its conversations, and closing a pane must not take
+	// the written ones off the list.
+	if auto := config.AutoWorkspaceDir(); auto != "" {
+		if st, err := os.Stat(auto); err == nil && st.IsDir() {
+			add(auto)
+		}
 	}
 	return out
 }

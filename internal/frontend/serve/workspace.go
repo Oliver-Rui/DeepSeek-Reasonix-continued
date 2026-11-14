@@ -74,6 +74,7 @@ func (s *Server) workspace(w http.ResponseWriter, r *http.Request) {
 	}
 	var body struct {
 		Path     string             `json:"path"`
+		Auto     bool               `json:"auto"`
 		Isolate  bool               `json:"isolate"`
 		Worktree *worktreeSelection `json:"worktree,omitempty"`
 	}
@@ -126,10 +127,21 @@ func (s *Server) workspace(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	dir, err := resolveWorkspaceDir(dir)
-	if err != nil {
-		writeErr(w, http.StatusBadRequest, err)
-		return
+	var err error
+	if body.Auto {
+		// The pill's 不在项目中工作 answer: the pane joins the app's own folder,
+		// the same one a brand-new conversation opens in.
+		dir = ensureAutoWorkspace()
+		if dir == "" {
+			writeErr(w, http.StatusInternalServerError, errors.New("the app's own folder could not be created"))
+			return
+		}
+	} else {
+		dir, err = resolveWorkspaceDir(dir)
+		if err != nil {
+			writeErr(w, http.StatusBadRequest, err)
+			return
+		}
 	}
 	if err := s.switchWorkspaceLocked(r.Context(), dir); err != nil {
 		writeErr(w, http.StatusConflict, err)
