@@ -1,5 +1,4 @@
 import { t } from "../i18n";
-import { StudioIcon } from "./StudioIcon";
 
 const WORDS = {
   projects: {
@@ -14,6 +13,10 @@ const WORDS = {
   },
 } as const;
 
+/** The tree's two standing labels: folders the person chose (项目), and the
+ *  folder the window itself opened in (任务). Each label carries its run's
+ *  fold-all, writing the same folded set the rows' own chevrons read, so one
+ *  click rests the whole group and every chevron agrees with the label. */
 /** The tree's two standing labels: folders the person chose (项目), and the
  *  folder the window itself opened in (任务). Each label carries its run's
  *  fold-all, writing the same folded set the rows' own chevrons read, so one
@@ -34,7 +37,6 @@ export function WorkspaceGroupHead({ group, folded, canFold, searching, onToggle
       disabled={!canFold || searching} aria-expanded={canFold ? !folded : undefined}
       title={said} aria-label={said} onClick={onToggle}>
       <span>{label}</span>
-      <StudioIcon name="down" className="wschev" data-open={canFold && !folded ? "" : undefined} data-leaf={canFold ? undefined : ""} />
     </button>
   );
 }

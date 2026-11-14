@@ -5,15 +5,12 @@ import { StudioIcon } from "./StudioIcon";
 import { RailFilterContext } from "./railfilter";
 
 /** The row above the tree: which view is on, the session filter, and the way
- *  into a new project. Folding a whole group lives on the group labels in the
+ *  into a new project. Picking conversations starts from the tree's own
+ *  right-click menus; folding a whole group lives on the group labels in the
  *  tree; ordering by recency lives in the filter menu, beside the scopes it
  *  reorders, rather than as a control of its own up here. */
-export function ProjectsHeader({ adder, onSelect, selecting, canSelect }: {
+export function ProjectsHeader({ adder }: {
   adder: Adder;
-  /** Start picking conversations; a project row grows a checkbox once it is on. */
-  onSelect?: () => void;
-  selecting?: boolean;
-  canSelect?: boolean;
 }) {
   const filter = useContext(RailFilterContext);
   return (
@@ -24,14 +21,6 @@ export function ProjectsHeader({ adder, onSelect, selecting, canSelect }: {
         </div>
         <span className="projects-spacer" />
         {filter}
-        {onSelect && (
-          <button className="projects-add projects-select" data-action="session.selection" data-value="start"
-            data-on={selecting ? "" : undefined} aria-pressed={selecting}
-            disabled={!selecting && !canSelect}
-            title={t("session.select_local_sessions")} aria-label={t("session.select_local_sessions")} onClick={onSelect}>
-            <StudioIcon name="check" />
-          </button>
-        )}
         <button className="projects-add" data-busy={adder.busy ? "" : undefined} disabled={adder.busy}
           title={t("session.open_project")} aria-label={t("session.open_project")} data-action="workspace.add" onClick={() => adder.add()}>
           <StudioIcon name="plus" />

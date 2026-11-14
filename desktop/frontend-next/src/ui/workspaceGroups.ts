@@ -1,8 +1,30 @@
-import type { TreeWorkspace } from "../port/hub";
+import type { TreeSession, TreeWorkspace } from "../port/hub";
 
 export interface WorkspaceGroups {
   projects: TreeWorkspace[];
   tasks: TreeWorkspace[];
+}
+
+/** Toggles one path inside an active selection; no-op when picking is off. */
+export function togglePath(current: Set<string> | null, path: string): Set<string> | null {
+  if (!current) return current;
+  const next = new Set(current);
+  if (next.has(path)) next.delete(path);
+  else next.add(path);
+  return next;
+}
+
+/** Picks or clears every row a folder currently shows, the way its checkbox
+ *  reads: all in, or all out. */
+export function pickVisible(current: Set<string> | null, rows: TreeSession[]): Set<string> | null {
+  if (!current) return current;
+  const next = new Set(current);
+  const all = rows.length > 0 && rows.every((row) => next.has(row.path));
+  for (const row of rows) {
+    if (all) next.delete(row.path);
+    else next.add(row.path);
+  }
+  return next;
 }
 
 /** Splits the tree into the two runs the sidebar draws, each keeping the order
