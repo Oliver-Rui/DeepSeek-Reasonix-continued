@@ -351,16 +351,14 @@ function WorkspacesView({ hub, tree, treeRead, answered = null, runtimes, active
         onExit={() => {
           // Back to the tree's own standing control. The menu entries that
           // start picking live inside closed menus, so the head is the way in;
-          // when every project is folded it still answers, and the add button
-          // takes the keyboard if the head has nothing to offer.
+          // a folded-everything head still answers with itself for the keyboard.
           const entry = document.querySelector<HTMLElement>('[data-action="workspace.fold-all"][data-value="projects"]');
-          const target = entry && !entry.hasAttribute("disabled") ? entry : document.querySelector<HTMLElement>('[data-action="workspace.add"]');
-          target?.focus();
+          entry?.focus();
         }}
         onBusy={(pending) => { setBusy(pending ? "batch" : ""); if (pending) { setSessionMenu(""); setEditing(""); setConfirm(""); } }}
         onClose={onClose} onArchive={onArchive} rememberedProjects={rememberedProjects} onRemoveWorkspaces={removeWorkspaces}
         liveIds={liveIds} reload={reload} onError={onError} />
-      <ProjectsHeader adder={adder} />
+      <ProjectsHeader />
       <div className="scroll">
         <div role="tree" aria-label={t("session.projects_and_conversations")} aria-multiselectable={selection !== null} inert={busy === "batch"} data-action-keydown="tree.navigate" ref={treeKeys.ref} onKeyDown={treeKeys.onKeyDown}>
           {ordered.map((ws, at) => {

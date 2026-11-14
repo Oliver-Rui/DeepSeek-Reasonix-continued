@@ -46,7 +46,7 @@
 /* The bar above the tree starts a new block, the way the settings row is
    separated at the foot: one hairline, inset like the column's own rows. */
 .rail .projects-header { height: 30px; min-height: 30px; padding: 0 2px 0 4px; margin: 4px 0 0; display: flex; align-items: center; position: relative; }
-.rail .projects-header::before { content: ""; position: absolute; left: 10px; right: 10px; top: -4px; height: 1px; background: var(--hair); }
+.rail .projects-header::before { content: ""; position: absolute; left: 4px; right: 4px; top: -4px; height: 1px; background: var(--hair); }
 .rail .projects-tabs { display: flex; align-items: center; gap: 2px; width: 100%; }
 /* No pill, no fill: the view's name is a word on the column's own background,
    the way the rows above it are. Only the current view is inked. */

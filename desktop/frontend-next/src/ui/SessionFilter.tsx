@@ -43,8 +43,8 @@ export function SessionFilter({ scope, counts, onScope }: { scope: SessionScope;
       <Picker
         className="session-filter-trigger"
         data-action="session.filter"
-        place="bottom"
-        align="end"
+        place="top"
+        align="start"
         current={scope}
         items={items}
         menuClassName="session-filter-menu"

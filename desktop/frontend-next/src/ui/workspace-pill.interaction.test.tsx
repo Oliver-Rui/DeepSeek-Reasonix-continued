@@ -8,6 +8,13 @@ import { MockHub } from "../port/mock_hub";
 
 afterEach(cleanup);
 
+// The pill lives in its own row above the composer card; the sidebar's project
+// rows share its words, so the guide is looked up in that row alone.
+const pillQuery = () => {
+  const row = document.querySelector(".composer-top");
+  return row ? row.querySelector("button.worktree-trigger") : null;
+};
+
 // The second folder the fixture remembers — the row a switch has to name.
 const SECOND = "~/projects/my-website";
 
@@ -67,11 +74,11 @@ describe("the composer's project pill", () => {
     expect(here.getAttribute("aria-selected")).toBe("true");
     // A project saved on another machine cannot serve this pane's kernel.
     expect(within(palette).queryByRole("option", { name: /training/ })).toBeNull();
-    expect(within(palette).getByRole("button", { name: "创建项目" })).toBeTruthy();
-    expect(within(palette).getByRole("button", { name: "不在项目中工作" })).toBeTruthy();
+    expect(within(palette).getByRole("button", { name: "添加新项目" })).toBeTruthy();
+    expect(within(palette).getByRole("button", { name: "不使用项目" })).toBeTruthy();
   });
 
-  it("reads 不在项目中工作 when the pane works outside every remembered project", async () => {
+  it("reads 进入项目工作 when the pane works outside every remembered project", async () => {
     const user = userEvent.setup();
     buildHub();
     const stub = hub.portFor.bind(hub);
@@ -85,7 +92,7 @@ describe("the composer's project pill", () => {
     await screen.findByRole("combobox", { name: "任务输入" });
 
     // The label follows /status, which lands a beat after the pane mounts.
-    await user.click(await screen.findByRole("button", { name: /不在项目中工作/ }));
+    await user.click(await screen.findByRole("button", { name: /进入项目工作/ }));
     const palette = await screen.findByRole("dialog", { name: "会话所属项目" });
     // The auto workspace is nobody's project, so no row is the current one.
     const rows = within(palette).queryAllByRole("option");
@@ -102,49 +109,52 @@ describe("the composer's project pill", () => {
     expect(screen.queryByRole("dialog", { name: "会话所属项目" })).toBeNull();
   });
 
-  it("asks the pane's kernel for its auto workspace from 不在项目中工作", async () => {
+  it("asks the pane's kernel for its auto workspace from 不使用项目", async () => {
     const user = userEvent.setup();
     const palette = await openPalette(user, "DeepSeek-Reasonix");
 
-    await user.click(within(palette).getByRole("button", { name: "不在项目中工作" }));
+    await user.click(within(palette).getByRole("button", { name: "不使用项目" }));
     await waitFor(() => expect(autos).toBe(1));
     expect(switched).toEqual([]);
     expect(screen.queryByRole("dialog", { name: "会话所属项目" })).toBeNull();
   });
 
-  it("confirms before leaving a conversation behind, and cancelling keeps it", async () => {
-    const user = userEvent.setup();
+  it("shows nothing once the conversation carries a transcript", async () => {
     buildHub({ content: true });
     render(<App hub={hub} />);
     await screen.findByRole("combobox", { name: "任务输入" });
-    await user.click(screen.getByRole("button", { name: "DeepSeek-Reasonix" }));
-    const palette = await screen.findByRole("dialog", { name: "会话所属项目" });
-
-    await user.click(within(palette).getByRole("option", { name: /my-website/ }));
-    // A written transcript is one the switch leaves in its project: the
-    // wording says so before anything moves.
-    expect(await screen.findByText(/切换后对话从『my-website』重新开始/)).toBeTruthy();
-    expect(switched).toEqual([]);
-    expect(autos).toBe(0);
-
-    await user.click(within(palette).getByRole("button", { name: "取消" }));
-    expect(screen.queryByText(/切换后对话从/)).toBeNull();
-    const reopened = await screen.findByRole("dialog", { name: "会话所属项目" });
-    expect(within(reopened).getByRole("option", { name: /my-website/ })).toBeTruthy();
-    expect(switched).toEqual([]);
-
-    await user.click(within(reopened).getByRole("option", { name: /my-website/ }));
-    await user.click(await screen.findByRole("button", { name: "确认" }));
-    await waitFor(() => expect(switched).toEqual([SECOND]));
+    // The pill is the fresh conversation's guide: a pane that has already
+    // said something is placed, wherever it lives, and shows no guide.
+    expect(pillQuery()).toBeNull();
+    expect(screen.queryByRole("dialog", { name: "会话所属项目" })).toBeNull();
   });
 
-  it("hands 创建项目 to the folder adder, and the session opens through it", async () => {
+  it("goes away once the pane has been placed in a project", async () => {
+    const user = userEvent.setup();
+    const palette = await openPalette(user, "DeepSeek-Reasonix");
+
+    await user.click(within(palette).getByRole("option", { name: /my-website/ }));
+    await waitFor(() => expect(switched).toEqual([SECOND]));
+    expect(pillQuery()).toBeNull();
+  });
+
+  it("goes away after 不使用项目 confirms the task", async () => {
+    const user = userEvent.setup();
+    const palette = await openPalette(user, "DeepSeek-Reasonix");
+
+    await user.click(within(palette).getByRole("button", { name: "不使用项目" }));
+    await waitFor(() => expect(autos).toBe(1));
+    expect(pillQuery()).toBeNull();
+  });
+
+  it("hands 使用现有文件夹 to the folder adder, and the session opens through it", async () => {
     const user = userEvent.setup();
     hub.pickFolder = async () => "/work/picked-project";
     const added = vi.spyOn(hub, "addWorkspace");
     const palette = await openPalette(user, "DeepSeek-Reasonix");
 
-    await user.click(within(palette).getByRole("button", { name: "创建项目" }));
+    await user.click(within(palette).getByRole("button", { name: "添加新项目" }));
+    await user.click(within(palette).getByRole("button", { name: "使用现有文件夹" }));
     await waitFor(() => expect(added).toHaveBeenCalledWith("/work/picked-project"));
   });
 

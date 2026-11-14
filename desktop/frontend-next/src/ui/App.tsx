@@ -551,6 +551,7 @@ export function App({ hub }: { hub: HubPort }) {
       <BrowserLogin />
 
       <Chrome
+        task={tree.some((ws) => ws.auto && ws.root === (report.status?.workspaceRoot || ""))}
         host={runtimes.find((rt) => rt.id === active)?.host}
         port={activePort}
         status={report.status}

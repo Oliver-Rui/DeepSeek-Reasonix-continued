@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { t } from "../i18n";
 import type { PickerProject } from "./useNewSessionPicker";
@@ -7,19 +7,18 @@ import { listenAction } from "./listen";
 import { beside, pinToViewport, useFollow, zoom } from "./place";
 import { useProjectChoiceSurface } from "./projectchoice";
 
-/** The composer's project pill: which project this conversation belongs to.
- *  It is the way a session changes projects after the fact — the pane's kernel
- *  is repointed at another folder and the conversation starts over there; the
- *  old transcript stays in the old project's directory. */
+/** The composer's project pill: the new conversation's guide. A fresh pane
+ *  shows it above the card so the person says where the conversation will
+ *  live — a project, or 不使用项目 — and once it has been placed, or a turn
+ *  has been written, the pill goes away and the sidebar's groups carry the
+ *  answer. Nothing reintroduces it; typing straight into a fresh pane makes
+ *  the task it was going to become anyway. */
 export function WorkspacePill() {
-  const { port, host, root, hasContent, canSwitch, running, projects, adder, onChanged, onSwitched, onError } = useProjectChoiceSurface();
+  const { port, root, hasContent, canSwitch, running, projects, adder, onChanged, onSwitched, onError } = useProjectChoiceSurface();
   const [switching, setSwitching] = useState(false);
-  // Held choice waiting for its confirmation: a project, or null for the auto
-  // workspace; undefined is no question on screen.
-  const [confirming, setConfirming] = useState<PickerProject | null>();
-  // A conversation whose person said 不使用项目 is a task, and the pill has
-  // nothing left to say: it goes away until the pane works in a project again.
-  const [taskOnly, setTaskOnly] = useState(false);
+  // Placed: this pane has had its say — a project picked, or 不使用项目
+  // confirmed — so the guide has done its work.
+  const [placed, setPlaced] = useState(false);
   const [choice, setChoice] = useState(false);
   const [needle, setNeedle] = useState("");
   // 添加新项目's submenu, and the blank-project dialog the submenu opens.
@@ -31,7 +30,6 @@ export function WorkspacePill() {
   const trigger = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   const card = useRef<HTMLDivElement>(null);
-  const title = useId();
   const returnFocus = useRef(false);
 
   const run = useCallback((call: () => Promise<unknown>) => {
@@ -40,7 +38,7 @@ export function WorkspacePill() {
       .finally(() => setSwitching(false));
   }, [onChanged, onSwitched, onError]);
 
-  const close = useCallback(() => { returnFocus.current = true; setChoice(false); setConfirming(undefined); setMenu(false); setNeedle(""); }, []);
+  const close = useCallback(() => { returnFocus.current = true; setChoice(false); setMenu(false); setNeedle(""); }, []);
   useEffect(() => {
     if (!choice && returnFocus.current) { returnFocus.current = false; trigger.current?.focus(); }
   }, [choice]);
@@ -50,32 +48,18 @@ export function WorkspacePill() {
 
   // The name the pill carries: the remembered project holding this pane's
   // folder — or the invitation, when the pane works outside any of them. The
-  // auto workspace belongs to no project, so a task pane shows nothing at all.
+  // auto workspace belongs to no project, so a task pane shows the invitation.
   const current = projects.find((p) => p.root === root);
   const label = current?.name ?? t("session.enter_a_project");
   const shown = needle
     ? projects.filter((p) => p.name.toLowerCase().includes(needle.trim().toLowerCase()))
     : projects;
 
-  // A conversation with content is one a switch leaves behind: ask, and let
-  // the confirmation — not the row — do the switching.
   const choose = (at: PickerProject | null) => {
-    if (hasContent) setConfirming(at);
-    else {
-      setChoice(false);
-      setMenu(false);
-      setNeedle("");
-      if (at === null) setTaskOnly(true);
-      run(at === null ? () => port.setWorkspaceAuto() : () => port.setWorkspace(at.root));
-    }
-  };
-  const confirm = () => {
-    const at = confirming;
-    setConfirming(undefined);
     setChoice(false);
+    setMenu(false);
     setNeedle("");
-    if (at === undefined) return;
-    if (at === null) setTaskOnly(true);
+    setPlaced(true);
     run(at === null ? () => port.setWorkspaceAuto() : () => port.setWorkspace(at.root));
   };
 
@@ -125,10 +109,12 @@ export function WorkspacePill() {
     const box = card.current.getBoundingClientRect();
     pinToViewport(card.current, (innerWidth - box.width) / 2, (innerHeight - box.height) / 2, 12);
   }, []);
-  useFollow(choice, put, `${switching}:${confirming === undefined}:${projects.length}`, { anchor: trigger, container: panel });
+  useFollow(choice, put, `${switching}:${projects.length}`, { anchor: trigger, container: panel });
   useEffect(() => {
     if (!choice) return;
-    panel.current?.querySelector<HTMLElement>("input, button:not(:disabled)")?.focus();
+    // No guided pick: the palette opens quiet, nothing pre-highlighted — the
+    // rows are a list to choose from, not a selection already under way.
+    panel.current?.focus();
     const outside = (event: MouseEvent) => {
       if (!panel.current?.contains(event.target as Node) && !trigger.current?.contains(event.target as Node)) close();
     };
@@ -163,8 +149,9 @@ export function WorkspacePill() {
     return () => { stopOutside(); stopKey(); observer?.disconnect(); };
   }, [blank, putCard]);
 
-  const asked = confirming !== undefined ? confirming?.name ?? t("session.use_no_project") : "";
-  if (!current && taskOnly) return null;
+  // The guide only stands where it can still guide: a pane that has been
+  // placed, or that already carries a transcript, shows nothing.
+  if (placed || hasContent) return null;
   return <div className="studio-branch-pop">
     <button ref={trigger} type="button" className="mode plain studio-branch worktree-trigger" data-action="workspace.configure"
       title={`${t("session.the_sessions_project")}\n${label}\n${root}`}
@@ -173,60 +160,45 @@ export function WorkspacePill() {
       onClick={() => (choice ? close() : setChoice(true))}>
       <StudioIcon name="folder" /><span className="lb">{switching ? t("session.switching_project") : label}</span><StudioIcon name="down" />
     </button>
-    {choice && createPortal(<div ref={panel} className="workspace-palette" role="dialog" aria-label={t("session.the_sessions_project")}>
-      {confirming !== undefined ? (
-        <>
-          <div className="workspace-palette-heading"><span id={title}>{t("session.the_sessions_project")}</span>
-            <button data-action="layer.dismiss" className="workspace-palette-close" aria-label={t("common.close")} onClick={close}><StudioIcon name="close" /></button></div>
-          <div className="workspace-palette-identity"><StudioIcon name="folder" /><strong title={root}>{label}</strong>{host && <span>SSH</span>}</div>
-          <p className="workspace-palette-desc" role="status">{t("session.switch_restarts_conversation", { name: asked })}</p>
-          <div className="worktree-modes">
-            <button data-action="workspace.project" data-target={confirming?.root} disabled={switching} onClick={confirm}>{t("common.confirm")}</button>
-            <button data-action="layer.dismiss" disabled={switching} onClick={() => setConfirming(undefined)}>{t("common.cancel")}</button>
-          </div>
-        </>
-      ) : (
-        <>
-          <label className="workspace-palette-search">
-            <StudioIcon name="search" />
+    {choice && createPortal(<div ref={panel} className="workspace-palette" role="dialog" aria-label={t("session.the_sessions_project")} tabIndex={-1}>
+      <label className="workspace-palette-search">
+        <StudioIcon name="search" />
         <input type="search" placeholder={t("session.search_projects")}
           value={needle} onChange={(ev) => setNeedle(ev.currentTarget.value)} />
-          </label>
-          <div className="worktree-sources" role="listbox" aria-label={t("session.the_sessions_project")}>
-            {shown.map((p) => (
-              <button key={p.key} data-action="workspace.project" data-target={p.root} type="button" role="option"
-                aria-selected={p.root === root} data-current={p.root === root ? "" : undefined} title={p.root}
-                disabled={switching} onClick={() => choose(p)}>
-                <StudioIcon name={p.host ? "server" : "folder"} />
-                <span className="workspace-palette-branch">{p.name}</span>
-                {p.root === root && <small>{t("common.now")}</small>}
-              </button>
-            ))}
-            {shown.length === 0 && <p className="workspace-palette-empty">{projects.length === 0 ? t("session.no_folders_yet") : t("session.no_project_matches")}</p>}
-          </div>
-          <div className="worktree-sources">
-            {adder && <div>
-              <button data-action="workspace.add-menu" type="button" aria-expanded={menu} disabled={switching || adder.busy}
-                onClick={() => setMenu((on) => !on)}>
-                <StudioIcon name="plus" /><span className="workspace-palette-branch">{t("session.add_a_new_project")}</span><StudioIcon name={menu ? "up" : "down"} />
-              </button>
-              {menu && <div className="workspace-palette-submenu">
-                <button data-action="workspace.add-blank" type="button" disabled={switching || adder.busy} onClick={openBlank}>
-                  <StudioIcon name="plus" /><span className="workspace-palette-branch">{t("session.new_blank_project")}</span>
-                </button>
-                <button data-action="workspace.add-existing" type="button" disabled={switching || adder.busy}
-                  onClick={() => { close(); adder.add(); }}>
-                  <StudioIcon name="folder" /><span className="workspace-palette-branch">{t("session.use_existing_folder")}</span>
-                </button>
-              </div>}
-            </div>}
-            <button data-action="workspace.project" type="button" disabled={switching} onClick={() => choose(null)}>
-              <StudioIcon name="close" /><span className="workspace-palette-branch">{t("session.use_no_project")}</span>
+      </label>
+      <div className="worktree-sources" role="listbox" aria-label={t("session.the_sessions_project")}>
+        {shown.map((p) => (
+          <button key={p.key} data-action="workspace.project" data-target={p.root} type="button" role="option"
+            aria-selected={p.root === root} data-current={p.root === root ? "" : undefined} title={p.root}
+            disabled={switching} onClick={() => choose(p)}>
+            <StudioIcon name={p.host ? "server" : "folder"} />
+            <span className="workspace-palette-branch">{p.name}</span>
+            {p.root === root && <small>{t("common.now")}</small>}
+          </button>
+        ))}
+        {shown.length === 0 && <p className="workspace-palette-empty">{projects.length === 0 ? t("session.no_folders_yet") : t("session.no_project_matches")}</p>}
+      </div>
+      <div className="worktree-sources">
+        {adder && <div>
+          <button data-action="workspace.add-menu" type="button" aria-expanded={menu} disabled={switching || adder.busy}
+            onClick={() => setMenu((on) => !on)}>
+            <StudioIcon name="plus" /><span className="workspace-palette-branch">{t("session.add_a_new_project")}</span><StudioIcon name={menu ? "up" : "down"} />
+          </button>
+          {menu && <div className="workspace-palette-submenu">
+            <button data-action="workspace.add-blank" type="button" disabled={switching || adder.busy} onClick={openBlank}>
+              <StudioIcon name="plus" /><span className="workspace-palette-branch">{t("session.new_blank_project")}</span>
             </button>
-          </div>
-          <p className="workspace-palette-note">{t("session.switch_fresh_conversation")}</p>
-        </>
-      )}
+            <button data-action="workspace.add-existing" type="button" disabled={switching || adder.busy}
+              onClick={() => { close(); adder.add(); }}>
+              <StudioIcon name="folder" /><span className="workspace-palette-branch">{t("session.use_existing_folder")}</span>
+            </button>
+          </div>}
+        </div>}
+        <button data-action="workspace.project" type="button" disabled={switching} onClick={() => choose(null)}>
+          <StudioIcon name="close" /><span className="workspace-palette-branch">{t("session.use_no_project")}</span>
+        </button>
+      </div>
+      <p className="workspace-palette-note">{t("session.switch_fresh_conversation")}</p>
     </div>, document.body)}
     {blank && createPortal(<div ref={card} className="workspace-blank" role="dialog" aria-label={t("session.new_blank_project")}>
       <div className="workspace-blank-head">

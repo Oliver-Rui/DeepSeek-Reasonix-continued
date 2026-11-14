@@ -507,7 +507,7 @@ body { background: var(--page) !important; }
 .session-filter-clear { width: 24px; height: 24px; display: grid; place-items: center; border: 0; border-radius: var(--r-pill); background: transparent; color: var(--faint); cursor: pointer; }
 .session-filter-clear:hover { background: var(--overlay); color: var(--text); }
 .session-filter-clear .studio-icon { width: 11px; height: 11px; }
-.session-filter-menu { min-width: 200px; }
+
 .rail .wsfind {
   position: absolute; z-index: 4; left: 19px; right: 19px; width: auto; height: 31px; margin: 0;
   transform: translateY(-40px); opacity: 0; pointer-events: none; border: 0; background: var(--surface);
@@ -3611,7 +3611,7 @@ svg.studio-icon[data-kind="image"] { color: var(--ok); }
 /* The session filter's own menu: a chosen scope is inked and ticked, not filled
    with --hair, and its words are the size of the rows that opened it. One word
    最近 carries the order both ways; the arrow says which. */
-.portmenu.session-filter-menu .mi { min-height: 30px; padding: 5px 8px; gap: 8px; border-radius: var(--r-sm); }
+.portmenu.session-filter-menu { display: inline-grid; grid-template-columns: max-content; width: auto; min-width: 0; max-width: min(420px, calc(100vw / var(--zoom, 1) - 24px)); } .portmenu.session-filter-menu .mi { width: auto; min-width: 0; min-height: 30px; padding: 5px 8px; gap: 8px; border-radius: var(--r-sm); }
 .portmenu.session-filter-menu .mi .lb { font: var(--w-med) var(--fs-ui)/1.35 var(--ui); }
 .portmenu.session-filter-menu .mi .rt { color: var(--muted); font: var(--w-reg) var(--fs-ui)/1 var(--ui); }
 :root .portmenu.session-filter-menu .mi[data-on], :root .portmenu.session-filter-menu .mi[data-on]:hover { background: transparent; }

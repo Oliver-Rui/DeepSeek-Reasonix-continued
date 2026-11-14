@@ -330,6 +330,35 @@ waiting for the word to push, rerun CI and republish.
 | `repolint -changed` | clean after trimming the touched CSS/Go lines back under their budgets |
 | The running app in the browser | the full flow: 新建会话 → 任务 group, the pill 进入项目工作 → palette (search, Reasonix Studio 当前, 添加新项目 submenu, 不使用项目), switching into a project and back, 不使用项目 hiding the pill, and a real task conversation run |
 
+### The review round that followed the first commit set
+
+The browser walkthrough surfaced a second pass, committed locally as well:
+
+- The pill became strictly the fresh conversation's guide — it shows only on an
+  empty transcript, and goes away the moment the pane is placed (a project
+  picked, 不使用项目 confirmed) or a turn has been written.
+- The confirm gate for content-bearing panes retired with the guide: a switch
+  now only happens from a conversation that has nothing to lose.
+- The palette opens quiet — no focused search box — and the search box matches
+  the option rows' width.
+- The sidebar's two hairlines agree: the 项目 header's line lost its private
+  10px inset and now matches the 设置 footer's 4px.
+- Task conversations file themselves by date — `…/2026/11/14/<name>.jsonl`
+  under the auto workspace's own folder, the way the reference reads back as a
+  calendar. `NewDatedSessionPath` is the task area's only; project sessions
+  stay flat.
+- The listing, the branch list, auto-archive and the empty-session GC all walk
+  the dated subfolders (`eachSessionDir`), so nothing that scans a session
+  folder loses a row.
+- The window bar names a task conversation by its title alone — no `auto`
+  folder crumb on a conversation that belongs to no project.
+- The 任务列表 header lost its redundant + (new sessions start from 新建会话;
+  projects are added from the pill and the empty state), and the scope menu
+  now opens at the click, expanding toward the bottom-right, sized to its
+  longest row.
+- `reasonix serve --workspace-switch` and the two new refusal codes above are
+  part of the same round.
+
 ### Open for the next session
 
 - These commits are local only — push through the Git Data API pipeline

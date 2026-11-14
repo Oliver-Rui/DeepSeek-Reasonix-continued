@@ -521,7 +521,7 @@ function PaneView({ port, hub, rt, title, active, visible, sideHost, side, onFoc
     port, host: rt.host, root: status?.workspaceRoot ?? rt.root,
     hasContent: !!status?.sessionPath, canSwitch: workspace?.canSwitch ?? true, running,
     projects: pickerProjects(projectTree, remotes, remoteTrees, runtimes)
-      .filter((p) => !rt.host || p.host === rt.host),
+      .filter((p) => p.host === rt.host),
     adder, onChanged: refreshStatus, onSwitched: () => { reloadSession(); }, onError: notify,
   }), [port, rt.host, status?.workspaceRoot, status?.sessionPath, workspace?.canSwitch, running, projectTree, remotes, remoteTrees, runtimes, adder, refreshStatus, reloadSession, notify]);
 
