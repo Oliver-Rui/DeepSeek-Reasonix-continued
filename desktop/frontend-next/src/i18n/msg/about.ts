@@ -11,6 +11,7 @@ export const ABOUT: Messages = {
   "about.clear_it_now": { zh: "现在清除", en: "Clear it now" },
   "about.could_not_read_the_release": { zh: "无法读取 {v} 的发布信息", en: "Could not read the release details for {v}" },
   "about.current_version": { zh: "当前版本", en: "Current version" },
+  "about.qq_group": { zh: "QQ 群", en: "QQ group" },
   "about.download": { zh: "自动下载", en: "Download" },
   "about.download_cancelled": { zh: "已取消下载", en: "Download cancelled" },
   "about.download_paused_the_connection_delivered": { zh: "下载暂停了：连接长时间没有数据，已重连 {n} 次…", en: "Download paused: the connection delivered nothing for a while, reconnected {n} time(s)…" },

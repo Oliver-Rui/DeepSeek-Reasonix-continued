@@ -278,6 +278,10 @@ export function Versions({ port }: { port: Port }) {
         <span className="lb">{t(dev ? "about.local_build" : "about.current_version")}</span>
         {hub.pinned && !hub.stalePin && <span className="pin">{t("common.pinned")}</span>}
       </div>
+      <div className="vqq">
+        <span className="lb">{t("about.qq_group")}</span>
+        <span className="num">1821170167</span>
+      </div>
 
       {/* Severity language is the transcript's: a coloured left rule, no icons.
           Pinned is not a problem, so it is ok-coloured; a stale pin is. */}

@@ -3617,6 +3617,9 @@
 
   .vers { display: flex; flex-direction: column; gap: 11px; container: versions / inline-size }
   .vnow { display: flex; align-items: baseline; gap: 9px }
+  .vqq { display: flex; align-items: baseline; gap: 9px; margin-top: -6px }
+  .vqq .lb { font: var(--w-reg) var(--fs-ui) var(--ui); color: var(--muted); animation: m-card var(--t-card) var(--ease-out) .07s both }
+  .vqq .num { font: var(--w-med) var(--fs-ui)/1 var(--mono); color: var(--text); user-select: all }
   .vnow .cur { font: var(--w-semi) var(--fs-display)/1 var(--mono); letter-spacing: .01em; color: var(--text) }
 
   .vnow .lb { font: var(--w-reg) var(--fs-ui) var(--ui); color: var(--muted); animation: m-card var(--t-card) var(--ease-out) .07s both }
