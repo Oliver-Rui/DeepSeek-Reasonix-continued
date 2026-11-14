@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -76,6 +77,22 @@ func (b *dispatchBook) setPending(from, root, role, id string) {
 	b.pending[dispatchKey{from, root, role}] = id
 }
 
+// rolesFor maps every pane from opened for its dispatches, decided or still
+// waiting, onto the role it was opened for, in one pass over the book.
+func (b *dispatchBook) rolesFor(from string) map[string]string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	out := map[string]string{}
+	for _, m := range []map[dispatchKey]string{b.sessions, b.pending} {
+		for k, id := range m {
+			if k.from == from && k.role != "" {
+				out[id] = k.role
+			}
+		}
+	}
+	return out
+}
+
 // dispatcherFor is what a pane's controller calls to hand a task to another of
 // the user's projects. The controller has already checked the user's switch.
 func (h *Hub) dispatcherFor(from *Runtime) control.ProjectDispatcher {
@@ -96,8 +113,22 @@ func (h *Hub) dispatchTo(ctx context.Context, from *Runtime, project, text, role
 	// This session's own project opens a second session only once the person
 	// allowed dispatch_to_project: "always allow" on the card is that yes. Until
 	// then the old rule stands and no window is opened for the same folder.
-	if sameFolder(root, sender.WorkspaceRoot()) && !sender.DispatchIntoSelfAllowed() {
+	own := sameFolder(root, sender.WorkspaceRoot())
+	if own && !sender.DispatchIntoSelfAllowed() {
 		return control.DispatchResult{}, projectError(control.ErrDispatchSameProject, root)
+	}
+	// Across projects the user's outgoing answer rules: "never" refuses every
+	// dispatch into another project, and "paired" lets through only what this
+	// session already has there (a reuse or pending hit), so a fresh pane refuses.
+	if cross := !own; cross {
+		switch config.LoadForEdit(config.UserConfigPath()).PeersCrossProject() {
+		case config.PeersCrossProjectNever:
+			return control.DispatchResult{}, projectError(control.ErrDispatchCrossProject, root)
+		case config.PeersCrossProjectPaired:
+			if h.runtimeByID(h.dispatch.get(from.ID, root, role)) == nil && h.runtimeByID(h.dispatch.getPending(from.ID, root, role)) == nil {
+				return control.DispatchResult{}, projectError(control.ErrDispatchCrossProject, root)
+			}
+		}
 	}
 	target := h.runtimeByID(h.dispatch.get(from.ID, root, role))
 	var secret []byte
@@ -181,8 +212,27 @@ func (h *Hub) openDispatchSession(ctx context.Context, from *Runtime, sender *co
 	ctrl.AdoptSessionGrant(grant)
 	ctrl.MarkOpenedByDispatch(sender.PeerKey(), secret, sender.DispatchDepth()+1)
 	ctrl.SetFreshSessionPath(sessionstore.NewSessionPath(SessionDirFor(root), "dispatch"))
+	if role != "" {
+		h.nameDispatchPaneAfterRole(ctrl, root, role)
+	}
 	h.dispatch.set(from.ID, root, role, target.ID)
 	return target, nil
+}
+
+// nameDispatchPaneAfterRole writes the role as a dispatched session's title:
+// the role is the session's name to the person scanning the sidebar, and an
+// explicit title outranks the preview and any automatic fill. Naming is
+// decoration, so a failure is logged and the dispatch still delivers.
+func (h *Hub) nameDispatchPaneAfterRole(ctrl *control.Controller, root, role string) {
+	path := ctrl.SessionPath()
+	if err := sessionstore.RenameSession(path, role); err != nil {
+		slog.Warn("dispatch: could not name the session after its role", "err", err)
+		return
+	}
+	if err := h.titleCacheFor(SessionDirFor(root)).putExplicit(filepath.Base(path), role); err != nil {
+		slog.Warn("dispatch: could not cache the session's role title", "err", err)
+	}
+	h.treeChanged()
 }
 
 // projectError names the project a refusal is about; errors.Is still finds the
@@ -201,6 +251,27 @@ func (h *Hub) liveDispatched(from string) int {
 		}
 	}
 	return n
+}
+
+// dispatchRoles resolves the roles from opened its dispatches for onto each
+// live target's peer key, the address a thread row is filed under, so /peers
+// can stamp the role onto the rows. A pane that closed has no row to name.
+func (h *Hub) dispatchRoles(fromID string) map[string]string {
+	out := map[string]string{}
+	for id, role := range h.dispatch.rolesFor(fromID) {
+		rt := h.runtimeByID(id)
+		if rt == nil {
+			continue
+		}
+		ctrl, ok := rt.Server.Controller().(*control.Controller)
+		if !ok {
+			continue
+		}
+		if key := ctrl.PeerKey(); key != "" {
+			out[key] = role
+		}
+	}
+	return out
 }
 
 func (h *Hub) runtimeByID(id string) *Runtime {

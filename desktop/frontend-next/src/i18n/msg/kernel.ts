@@ -434,6 +434,8 @@ export const KERNEL: Messages = {
   "kernel.the_context_has_not_changed": { zh: "上下文自上次整理后没有变化", en: "The context has not changed since it was last tidied" },
   "kernel.the_context_holds_about_total": { zh: "上下文约 {total}，已超过压缩阈值 {at}，没有更多可折叠的内容。占用最多：{top}。{active}", en: "The context holds about {total}, over the {at} compaction threshold, and nothing more can be folded. Largest: {top}. {active}" },
   "kernel.the_context_window_cannot_be": { zh: "上下文长度不能是负数；填 0 表示不自动压缩", en: "The context window cannot be negative; 0 means no automatic compaction" },
+  "kernel.the_cross_project_answer_must_be": { zh: "跨项目派发只能是 always、paired 或 never", en: "The cross-project answer must be always, paired or never" },
+  "kernel.the_incoming_answer_must_be": { zh: "收到的消息这一项只能是 ask、dispatch 或 always", en: "The incoming answer must be ask, dispatch or always" },
   "kernel.the_conversation_changed_while_the": { zh: "摘要生成期间对话发生了变化，已放弃这次折叠", en: "The conversation changed while the summary was written, so this fold was dropped" },
   "kernel.the_conversation_index_cannot_answer": { zh: "对话内容索引暂时无法回答，稍后再试", en: "The conversation index cannot answer right now; try again shortly" },
   "kernel.the_conversation_path_could_not": { zh: "读不了该会话的路径：{detail}", en: "The conversation path could not be read: {detail}" },

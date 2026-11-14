@@ -93,6 +93,9 @@ type Server struct {
 	// siblings lists the other local panes open on the same workspace, set by
 	// the hub; nil for a server outside one.
 	siblings func(self *Server) []*Server
+	// dispatchRoles names the roles this pane's dispatched sessions answer to,
+	// keyed by peer key; set by the hub for its own panes, nil elsewhere.
+	dispatchRoles func() map[string]string
 	// resolver is what every rebuild of this pane resolves models through, set
 	// by the hub. Nil leaves boot reading this machine's own config.
 	resolver provider.Resolver

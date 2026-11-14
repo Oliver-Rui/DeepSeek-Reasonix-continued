@@ -282,3 +282,25 @@ func TestOpeningNestedFoldersWithoutAskingIsOffByDefaultAndTheUsersToTurnOn(t *t
 		t.Fatalf("turned off = %+v, %v", got, err)
 	}
 }
+
+func TestCrossProjectIsASwitchTheUserCanSetAndNotInvent(t *testing.T) {
+	f := newStandbyFixture(t)
+	if s := f.c.PeersSettings(); s.CrossProject != config.PeersCrossProjectAlways {
+		t.Fatalf("default = %q, want always", s.CrossProject)
+	}
+	paired := "paired"
+	got, err := f.c.SavePeersSettings(PeersPatch{CrossProject: &paired})
+	if err != nil || got.CrossProject != paired {
+		t.Fatalf("saved = %+v, %v; want paired", got, err)
+	}
+	if again := f.c.PeersSettings(); again.CrossProject != paired {
+		t.Fatal("the answer did not survive a read-back")
+	}
+	weird := "sometimes"
+	if _, err := f.c.SavePeersSettings(PeersPatch{CrossProject: &weird}); !errors.Is(err, ErrPeerCrossProjectInvalid) {
+		t.Fatalf("an invented answer = %v, want ErrPeerCrossProjectInvalid", err)
+	}
+	if after := f.c.PeersSettings(); after.CrossProject != paired {
+		t.Fatal("a refused answer changed the file")
+	}
+}

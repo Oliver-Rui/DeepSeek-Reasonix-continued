@@ -472,6 +472,86 @@ func TestADispatchToTheSendersOwnProjectOpensNothing(t *testing.T) {
 	}
 }
 
+// "never" is the narrowest answer: no task crosses into another project, and
+// nothing is opened for one.
+func TestCrossProjectNeverRefusesAndOpensNothing(t *testing.T) {
+	f := newDispatchFixture(t, dispatchOn+"cross_project = \"never\"\n")
+	f.project("billing", true)
+	sender := f.sender(f.project("alpha", true))
+	_, err := sender.DispatchToProject(context.Background(), "billing", "x", "")
+	if !errors.Is(err, control.ErrDispatchCrossProject) || !strings.Contains(err.Error(), "billing") {
+		t.Fatalf("err = %v, want dispatch.cross_project naming the project", err)
+	}
+	if f.opened != 0 {
+		t.Fatalf("%d panes opened with the answer set to never", f.opened)
+	}
+}
+
+// "paired" keeps what the session already has in a project and refuses a fresh
+// pane: a second task to the same root goes to the pane already waiting, while a
+// first task to a new project is refused.
+func TestCrossProjectPairedReusesWhatItHasAndRefusesAFreshPane(t *testing.T) {
+	f := newDispatchFixture(t, dispatchOn)
+	f.project("billing", true)
+	f.project("ledger", true)
+	sender := f.sender(f.project("alpha", true))
+	ctx := context.Background()
+	first, err := sender.DispatchToProject(ctx, "billing", "x", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(config.UserConfigPath(), []byte(dispatchOn+"cross_project = \"paired\"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	again, err := sender.DispatchToProject(ctx, "billing", "y", "")
+	if err != nil || again.Key != first.Key || f.opened != 1 {
+		t.Fatalf("again = %+v, %v, opened %d; want the same pane reused without opening another", again, err, f.opened)
+	}
+	if _, err := sender.DispatchToProject(ctx, "ledger", "x", ""); !errors.Is(err, control.ErrDispatchCrossProject) {
+		t.Fatalf("a fresh pane in a new project = %v, want dispatch.cross_project", err)
+	}
+	if f.opened != 1 {
+		t.Fatalf("%d panes opened after the refusal", f.opened)
+	}
+}
+
+// A pane still waiting on the user's trust answer is one the session already
+// has: "paired" lets the next dispatch take it over instead of refusing, so the
+// refusal names trust, not cross-project.
+func TestCrossProjectPairedStillTakesOverAPaneWaitingOnTrust(t *testing.T) {
+	f := newDispatchFixture(t, dispatchOn)
+	a := f.project("alpha", true)
+	home, err := os.UserHomeDir()
+	if err != nil {
+		t.Skip("no home directory")
+	}
+	rememberWorkspace(home)
+	sender := f.sender(a)
+	ctx := context.Background()
+	if _, err := sender.DispatchToProject(ctx, filepath.Base(home), "do it", ""); !errors.Is(err, control.ErrDispatchAwaitingTrust) {
+		t.Fatalf("first dispatch = %v, want dispatch.awaiting_trust", err)
+	}
+	if err := os.WriteFile(config.UserConfigPath(), []byte(dispatchOn+"cross_project = \"paired\"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := sender.DispatchToProject(ctx, filepath.Base(home), "do it", ""); !errors.Is(err, control.ErrDispatchAwaitingTrust) {
+		t.Fatalf("second dispatch = %v, want the pending pane taken over (awaiting_trust), not dispatch.cross_project", err)
+	}
+}
+
+// The default, the answer spelled out, and an answer the file mangled all behave
+// as always: dispatch across projects opens a session as before.
+func TestCrossProjectAlwaysAndAnUnknownAnswerDispatchAsBefore(t *testing.T) {
+	for _, file := range []string{dispatchOn, dispatchOn + "cross_project = \"always\"\n", dispatchOn + "cross_project = \"nonsense\"\n"} {
+		f := newDispatchFixture(t, file)
+		f.project("billing", true)
+		sender := f.sender(f.project("alpha", true))
+		if _, err := sender.DispatchToProject(context.Background(), "billing", "x", ""); err != nil {
+			t.Fatalf("%q: err = %v, want the task delivered", file, err)
+		}
+	}
+}
+
 // A role is what lets one sender hold several sessions in one project: each
 // name opens its own pane, and the same name goes back to the pane it opened.
 // The allowance still comes from the permission rule, as it does without a role.

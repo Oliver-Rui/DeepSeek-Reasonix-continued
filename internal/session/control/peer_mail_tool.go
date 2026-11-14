@@ -59,7 +59,7 @@ func peerErrorCode(err error) string {
 		"peer.empty": ErrPeerEmpty, "peer.too_large": ErrPeerTooLarge,
 		"dispatch.disabled": ErrDispatchDisabled, "dispatch.unavailable": ErrDispatchUnavailable, "dispatch.not_local": ErrDispatchNotLocal, "dispatch.unknown_project": ErrDispatchUnknownProject,
 		"dispatch.ambiguous": ErrDispatchAmbiguous, "dispatch.nested": ErrDispatchNested,
-		"dispatch.untrusted": ErrDispatchUntrusted, "dispatch.awaiting_trust": ErrDispatchAwaitingTrust, "dispatch.same_project": ErrDispatchSameProject, "dispatch.failed": ErrDispatchFailed, "dispatch.limit": ErrDispatchLimit,
+		"dispatch.untrusted": ErrDispatchUntrusted, "dispatch.awaiting_trust": ErrDispatchAwaitingTrust, "dispatch.same_project": ErrDispatchSameProject, "dispatch.cross_project": ErrDispatchCrossProject, "dispatch.failed": ErrDispatchFailed, "dispatch.limit": ErrDispatchLimit,
 		"open_projects.empty": ErrOpenProjectsEmpty, "open_projects.too_many": ErrOpenProjectsTooMany, "open_projects.relative": ErrOpenProjectsRelative,
 		"open_projects.declined": ErrOpenProjectsDeclined, "open_projects.no_answer": ErrOpenProjectsNoAnswer, "open_projects.plan_mode": ErrOpenProjectsPlan,
 	} {

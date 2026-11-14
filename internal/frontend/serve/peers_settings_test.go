@@ -89,6 +89,27 @@ func TestPeersSettingsRoundTripAndTheirRefusals(t *testing.T) {
 	}
 }
 
+func TestCrossProjectRoundTripsAndAnUnknownAnswerIsRefused(t *testing.T) {
+	srv := standbyServer(t, true)
+	if got := getSettings(t, srv.URL).CrossProject; got != config.PeersCrossProjectAlways {
+		t.Fatalf("fresh cross_project = %q, want always", got)
+	}
+	if status, raw := postSide(t, srv.URL+"/peers/settings", map[string]any{"cross_project": "sometimes"}); status != http.StatusBadRequest || !strings.Contains(string(raw), codePeerBadCross) {
+		t.Fatalf("an invented answer = %d %s", status, raw)
+	}
+	if status, _ := postSide(t, srv.URL+"/peers/settings", map[string]any{"cross_project": "paired"}); status != http.StatusOK {
+		t.Fatal("save failed")
+	}
+	if got := getSettings(t, srv.URL).CrossProject; got != config.PeersCrossProjectPaired || config.UserPeers().CrossProject != config.PeersCrossProjectPaired {
+		t.Fatalf("read back = %q / %q, want paired on both", got, config.UserPeers().CrossProject)
+	}
+	// The incoming gap this closes: an invented incoming answer is refused with
+	// its own code instead of falling through to save_failed.
+	if status, raw := postSide(t, srv.URL+"/peers/settings", map[string]any{"incoming": "sometimes"}); status != http.StatusBadRequest || !strings.Contains(string(raw), codePeerBadIncoming) {
+		t.Fatalf("an invented incoming = %d %s", status, raw)
+	}
+}
+
 func TestANetworkedClientCannotTurnMessagesOn(t *testing.T) {
 	srv := standbyServer(t, false)
 	if status, raw := postSide(t, srv.URL+"/peers/settings", map[string]any{"enabled": true}); status != http.StatusForbidden {

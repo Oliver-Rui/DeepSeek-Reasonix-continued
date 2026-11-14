@@ -221,3 +221,70 @@ func TestSavingTheUserFileKeepsOpenNestedAndWritesNothingWhenItIsOff(t *testing.
 		t.Fatalf("an off setting was written out:\n%s", raw)
 	}
 }
+
+func TestCrossProjectDefaultsToAlwaysAndAnUnknownAnswerFallsBackToIt(t *testing.T) {
+	if d := Default(); d.PeersCrossProject() != PeersCrossProjectAlways {
+		t.Fatalf("default cross_project = %q, want always", d.PeersCrossProject())
+	}
+	cfg, _ := loadScoped(t, "[peers]\ncross_project = \"paired\"\n", "")
+	if cfg.PeersCrossProject() != PeersCrossProjectPaired {
+		t.Fatalf("user file cross_project = %q, want paired", cfg.PeersCrossProject())
+	}
+	unknown, _ := loadScoped(t, "[peers]\ncross_project = \"sometimes\"\n", "")
+	if unknown.PeersCrossProject() != PeersCrossProjectAlways {
+		t.Fatalf("an unknown answer = %q, want the always default", unknown.PeersCrossProject())
+	}
+}
+
+// The answer says what other projects may be handed a task at all, so a cloned
+// repository can neither widen nor narrow it.
+func TestAProjectFileCannotMoveCrossProjectDispatch(t *testing.T) {
+	proj, _ := loadScoped(t, "", "[peers]\ncross_project = \"never\"\n")
+	if proj.PeersCrossProject() != PeersCrossProjectAlways {
+		t.Fatal("a cloned repo's reasonix.toml set the cross-project answer")
+	}
+	if !slices.Contains(ignoredKeys(proj), "peers.cross_project") {
+		t.Fatalf("ignored = %v, want peers.cross_project reported", ignoredKeys(proj))
+	}
+	if kept, _ := loadScoped(t, "[peers]\ncross_project = \"paired\"\n", "[peers]\ncross_project = \"never\"\n"); kept.PeersCrossProject() != PeersCrossProjectPaired {
+		t.Fatal("the project file overrode the user's own answer")
+	}
+}
+
+func TestSetPeersCrossProjectTakesOnlyTheThreeAnswers(t *testing.T) {
+	c := Default()
+	if err := c.SetPeersCrossProject("paired"); err != nil || c.PeersCrossProject() != PeersCrossProjectPaired {
+		t.Fatalf("paired = %q, %v", c.PeersCrossProject(), err)
+	}
+	if err := c.SetPeersCrossProject(""); err != nil || c.PeersCrossProject() != PeersCrossProjectAlways {
+		t.Fatalf("an empty answer = %q, %v; want the always default", c.PeersCrossProject(), err)
+	}
+	if err := c.SetPeersCrossProject("sometimes"); err == nil {
+		t.Fatal("an invented answer was accepted")
+	}
+}
+
+func TestSavingCrossProjectWritesItAndTheDefaultWritesNothing(t *testing.T) {
+	t.Setenv("REASONIX_HOME", testenv.TempDir(t))
+	path := UserConfigPath()
+	cfg := LoadForEdit(path)
+	cfg.Peers.CrossProject = PeersCrossProjectPaired
+	if err := cfg.SaveTo(path); err != nil {
+		t.Fatal(err)
+	}
+	if got := LoadForEdit(path).PeersCrossProject(); got != PeersCrossProjectPaired {
+		t.Fatalf("cross_project after a save = %q, want paired", got)
+	}
+	always := LoadForEdit(path)
+	always.Peers.CrossProject = PeersCrossProjectAlways
+	if err := always.SaveTo(path); err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(raw), "cross_project") {
+		t.Fatalf("the default answer was written out:\n%s", raw)
+	}
+}

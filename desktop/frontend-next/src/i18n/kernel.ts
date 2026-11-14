@@ -591,6 +591,8 @@ const SAID: Record<string, string> = {
   "peer.send_failed": "kernel.the_message_between_sessions_did",
   "peer.invalid_project": "kernel.a_released_project_must_be",
   "peer.invalid_ceiling": "kernel.a_dispatch_ceiling_is_a",
+  "peer.invalid_incoming": "kernel.the_incoming_answer_must_be",
+  "peer.invalid_cross_project": "kernel.the_cross_project_answer_must_be",
   "peer.remember_denied": "kernel.only_an_approval_can_be",
   "mods.invalid_budget": "kernel.a_hooks_running_time_is",
   "mods.editing_disabled": "kernel.this_client_cannot_change_the",

@@ -27,7 +27,10 @@ const peerThreadWindow = 30 * 24 * time.Hour
 
 // PeerThread is one session this one has sent to, and where that stands.
 type PeerThread struct {
-	Key         string          `json:"key"`
+	Key string `json:"key"`
+	// Role is the name the sender dispatched this session under, as the serving
+	// pane's dispatch book remembers it; empty for a thread no dispatch opened.
+	Role        string          `json:"role,omitempty"`
 	Title       string          `json:"title,omitempty"`
 	Project     string          `json:"project,omitempty"`
 	SessionPath string          `json:"sessionPath,omitempty"`
