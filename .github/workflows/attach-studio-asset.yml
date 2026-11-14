@@ -1,0 +1,82 @@
+name: Attach studio asset
+
+# The maintainer's machine breaks multipart uploads (its egress proxy rewrites
+# them, and GitHub ends up storing the raw request body — the installer gains a
+# form-data prologue and Windows refuses to run it), so the Windows installer
+# is attached to its release from here instead: inside GitHub's own network the
+# artifact moves untouched. Dispatch with the tag whose release needs its
+# installer; the run finds that tag's successful release-studio build, unpacks
+# the installer, renames it with the version, uploads it, and reads it back to
+# prove the stored bytes are the built bytes. Unsigned, like the release it
+# lands on — signing stays the publish job's business once a key exists.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing studio tag to attach (for example studio-v2.62.0)
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: attach-studio-asset-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  attach:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Find the tag's successful release-studio build
+        id: run
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          run_id="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/release-studio.yml/runs?per_page=30" \
+            --jq "[.workflow_runs[] | select(.display_title == \"Release Studio ${{ inputs.tag }}\" and .conclusion == \"success\")][0].id")"
+          if [ -z "$run_id" ] || [ "$run_id" = "null" ]; then
+            echo "::error::no successful release-studio run titled 'Release Studio ${{ inputs.tag }}'"
+            exit 1
+          fi
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+
+      - name: Unpack the installer and give it the version
+        id: file
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          art_id="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/${{ steps.run.outputs.run_id }}/artifacts?per_page=50" \
+            --jq '[.artifacts[] | select(.name == "studio-build-windows-amd64" and .expired == false)][0].id')"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$art_id/zip" > artifact.zip
+          unzip -o artifact.zip "ReasonixStudio-windows-amd64-installer.exe"
+          ver="${{ inputs.tag }}"
+          ver="${ver#studio-v}"
+          name="ReasonixStudio-$ver-windows-amd64-installer.exe"
+          mv ReasonixStudio-windows-amd64-installer.exe "$name"
+          [ "$(head -c 2 "$name")" = "MZ" ] || { echo "::error::extracted installer is not a PE file"; exit 1; }
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "sha256=$(sha256sum "$name" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      - name: Attach it to the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ inputs.tag }}" "${{ steps.file.outputs.name }}" --clobber --repo "$GITHUB_REPOSITORY"
+
+      - name: Read it back and prove the bytes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          id="$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/${{ inputs.tag }}" \
+            --jq "[.assets[] | select(.name == \"${{ steps.file.outputs.name }}\")][0].id")"
+          gh api "repos/$GITHUB_REPOSITORY/releases/assets/$id" \
+            -H "Accept: application/octet-stream" > stored.exe
+          got="$(sha256sum stored.exe | cut -d' ' -f1)"
+          if [ "$got" != "${{ steps.file.outputs.sha256 }}" ]; then
+            echo "::error::stored asset sha256 $got != built ${{ steps.file.outputs.sha256 }}"
+            exit 1
+          fi
+          echo "stored asset is byte-identical to the build: $got"
