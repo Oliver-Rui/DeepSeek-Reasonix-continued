@@ -122,8 +122,14 @@ func TestArm64InstallerIsPackedWithTheFilterTheExtractorReads(t *testing.T) {
 	if !slices.Contains(names, "windows-install-smoke") {
 		t.Error("publish does not wait for windows-install-smoke")
 	}
-	if !strings.Contains(mappingScalar(mappingValue(jobs, "publish"), "if"), "needs.windows-install-smoke.result == 'success'") {
-		t.Error("publish does not require windows-install-smoke to have succeeded")
+	// The run-condition logic lives on the gate now; publish reads only its
+	// verdict, so the smoke requirement is asserted on the gate's own if.
+	gate := mappingScalar(mappingValue(jobs, "publish-gate"), "if")
+	if !strings.Contains(gate, "needs.windows-install-smoke.result == 'success'") {
+		t.Error("publish-gate does not require windows-install-smoke to have succeeded")
+	}
+	if got := mappingScalar(mappingValue(jobs, "publish"), "if"); !strings.Contains(got, "needs.publish-gate.outputs.publish == 'true'") {
+		t.Error("publish does not follow the publish-gate's verdict")
 	}
 }
 

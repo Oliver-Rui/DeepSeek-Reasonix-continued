@@ -21,6 +21,7 @@ const SOURCES = import.meta.glob(["../**/*.tsx", "!../**/*.test.*"], {
 // are set in the terminal's own face because that is the product's vernacular.
 const MARKS: Record<string, string> = {
   esc: "Esc — a keycap, which is lettering on a key rather than prose",
+  num: "the QQ group digits — a figure to select and copy, not a sentence",
   "oobe-brand": "the lockup's STUDIO line, deliberately set in the terminal's face",
   "oobe-sub": "the lockup's tagline, set with it",
   "oobe-skip": "the third line of that same screen",

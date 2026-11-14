@@ -1,5 +1,6 @@
-// The Projects heading's add-folder button stays visible and hit-testable
-// before hover. Opacity and hit-testing need a real browser.
+// The add-folder entry moved off the Projects heading (fa9e491): the heading
+// is a label, and the folder answer lives in the fresh conversation's pill
+// palette. Opacity and hit-testing need a real browser.
 import { chromium } from "playwright";
 
 const BASE = process.env.PERF_URL ?? "http://localhost:4399/perf.html?pref=zh";
@@ -13,27 +14,48 @@ const browser = await chromium.launch();
 try {
   for (const theme of ["light", "dark"]) {
     for (const width of [1280, 1600]) {
+      const where = `${theme} ${width}`;
       const page = await browser.newPage({ viewport: { width, height: 800 }, colorScheme: theme, reducedMotion: "reduce" });
       page.on("pageerror", (e) => fails.push("page error: " + e.message));
       await page.goto(BASE, { waitUntil: "networkidle" });
       await page.waitForSelector(".projects-header");
       await page.mouse.move(width - 2, 790);
       await page.waitForTimeout(300);
-      const g = await page.evaluate(() => {
+
+      // The heading keeps quiet: it names the column below, it is not a control.
+      const quiet = await page.evaluate(() => {
         const row = document.querySelector(".projects-header");
-        const add = row?.querySelector('[data-action="workspace.add"]');
-        if (!add) return null;
-        const r = add.getBoundingClientRect();
+        return {
+          add: row?.querySelector('[data-action="workspace.add"]') ?? null,
+          label: row?.querySelector(".vtab")?.getAttribute("aria-current") ?? null,
+        };
+      });
+      check(`${where}: the Projects heading carries no add-folder button`, quiet.add === null);
+      check(`${where}: the 任务列表 header is a label marked current`, quiet.label === "true");
+
+      // A fresh conversation carries the pill; its palette holds the folder
+      // entries, visible and hit-testable without any hover reveal.
+      await page.locator('[data-action="session.new"]').first().click();
+      // Only the fresh pane's pill is visible; the background panes keep their
+      // own (hidden) project triggers in the DOM.
+      const pill = page.locator('[data-action="workspace.configure"][title^="会话所属项目"]:visible').first();
+      await pill.waitFor();
+      await pill.click();
+      await page.locator('[data-action="workspace.add-menu"]').waitFor();
+      await page.locator('[data-action="workspace.add-menu"]').click();
+      const blank = page.locator('[data-action="workspace.add-blank"]');
+      const existing = page.locator('[data-action="workspace.add-existing"]');
+      await blank.waitFor();
+      const geo = await blank.evaluate((button) => {
+        const r = button.getBoundingClientRect();
         const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
         let seen = 1;
-        for (let el = add; el && el !== document.body; el = el.parentElement) seen *= Number(getComputedStyle(el).opacity);
-        return { opacity: seen, width: r.width, height: r.height, hits: hit === add || add.contains(hit), shown: row.matches(":hover") };
+        for (let el = button; el && el !== document.body; el = el.parentElement) seen *= Number(getComputedStyle(el).opacity);
+        return { opacity: seen, width: r.width, height: r.height, hits: hit === button || button.contains(hit) };
       });
-      const where = `${theme} ${width}`;
-      check(`${where}: the Projects heading has the add-folder button`, g !== null);
-      if (!g) continue;
-      check(`${where}: it is visible without hovering the row`, !g.shown && g.opacity === 1 && g.width > 0 && g.height > 0, JSON.stringify(g));
-      check(`${where}: it takes the pointer`, g.hits);
+      check(`${where}: the palette offers the folder entries`, geo.width > 0 && geo.height > 0 && (await existing.isVisible()), JSON.stringify(geo));
+      check(`${where}: they are visible without hovering`, geo.opacity === 1);
+      check(`${where}: the blank-project entry takes the pointer`, geo.hits);
       await page.close();
     }
   }
