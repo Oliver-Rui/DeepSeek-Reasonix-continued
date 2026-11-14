@@ -59,7 +59,7 @@
 .plan-card-hint { flex: 1 1 220px; min-width: 0; color: var(--faint); font: var(--w-reg) var(--fs-meta)/1.5 var(--ui); text-align: right; }
 
 .compose > .studio-todo {
-  position: absolute; inset: auto 14px 100%; margin: 0; z-index: 7;
+  position: absolute; inset: auto 0 100%; margin: 0; z-index: 7;
   border: 1px solid var(--border); border-bottom: 0; border-radius: var(--r-md) var(--r-md) 0 0;
   background: var(--page); box-shadow: none;
 }

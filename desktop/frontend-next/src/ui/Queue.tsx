@@ -1,6 +1,42 @@
 import type { Queue as QueueSnapshot, QueueItem } from "../port/port";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { t } from "../i18n";
 import { BLOCK_WHY } from "../i18n/queue_why";
+
+// A cut preview opens its full text beside itself after a beat — hovering down
+// a column of rows must not pop one per row. The overlay portals to the body:
+// the row list scrolls, and a scroll container would clip what it holds.
+function CutPreview({ text }: { text: string }) {
+  const [at, setAt] = useState<{ left: number; top: number } | null>(null);
+  const span = useRef<HTMLSpanElement>(null);
+  const timer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+  const open = () => {
+    const el = span.current;
+    if (!el) return;
+    timer.current = window.setTimeout(() => {
+      const r = el.getBoundingClientRect();
+      if (r.width >= el.scrollWidth - 1) return;
+      const x = Math.max(8, Math.min(r.left, window.innerWidth - 380));
+      const fitsBelow = r.bottom + 8 + 220 <= window.innerHeight;
+      setAt(fitsBelow
+        ? { left: x, top: r.bottom + 8 }
+        : { left: x, top: Math.max(8, r.top - 8 - 220) });
+    }, 500);
+  };
+  const shut = () => { window.clearTimeout(timer.current); setAt(null); };
+  return (
+    <>
+      <span ref={span} className="pv" data-cut={at ? "" : undefined}
+        onPointerEnter={open} onPointerLeave={shut} onBlur={shut}>{text}</span>
+      {at && createPortal(
+        <div className="ovf" role="tooltip" style={{ left: at.left, top: at.top }}>{text}</div>,
+        document.body,
+      )}
+    </>
+  );
+}
 
 interface Props {
   queue: QueueSnapshot | null;
@@ -74,7 +110,8 @@ export function Queue({ queue, running, shown, onSendNow, onToSteer, onCancel, o
 
   return (
     <div className="queue" role="group" aria-label={t("composer.pending")}>
-      {items.map((it, i) => {
+      <div className="qitems">
+        {items.map((it, i) => {
         const coded = it.blockCode ? BLOCK_WHY[it.blockCode] : undefined;
         const why = coded ? t(coded) : it.blockReason;
         const held = it.state === "blocked" || it.state === "uncertain";
@@ -83,7 +120,7 @@ export function Queue({ queue, running, shown, onSendNow, onToSteer, onCancel, o
             <span className="ql" data-tone={held ? "warn" : undefined} title={it.state === "steer_accepted" ? t("composer.goes_in_at_the_next") : it.origin === "host" ? t("composer.background_job_follow_on") : undefined}>
               {label(it, i + 1)}
             </span>
-            <span className="pv">{it.preview}</span>
+            <CutPreview text={it.preview} />
             {held && why && <span className="qwhy" title={why}>{why}</span>}
             <span className="qacts">
               {queue.paused && i === 0 && !queue.readonly && (
@@ -112,7 +149,8 @@ export function Queue({ queue, running, shown, onSendNow, onToSteer, onCancel, o
             </span>
           </div>
         );
-      })}
+        })}
+      </div>
     </div>
   );
 }
