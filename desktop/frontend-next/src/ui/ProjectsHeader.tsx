@@ -2,19 +2,17 @@ import { useContext } from "react";
 import { t } from "../i18n";
 import { RailFilterContext } from "./railfilter";
 
-/** The row above the tree: which view is on, and the session filter. Picking
- *  conversations starts from the tree's own right-click menus; folding a whole
- *  group lives on the group labels in the tree; ordering by recency lives in
- *  the filter menu, beside the scopes it reorders, rather than as a control of
- *  its own up here. */
+/** The row above the tree: the view's name and the session filter. The name
+ *  is a label, not a control — this build has the one view, so the word only
+ *  says what the column below is. Picking conversations starts from the tree's
+ *  own right-click menus; folding a group lives on the group labels; ordering
+ *  by recency lives in the filter menu, beside the scopes it reorders. */
 export function ProjectsHeader() {
   const filter = useContext(RailFilterContext);
   return (
     <div className="projects-header">
       <div className="projects-tabs">
-        <div className="vtabs" role="group" aria-label={t("session.session_view")}>
-          <button type="button" className="vtab" data-action="session.view" data-value="projects" aria-pressed="true">{t("session.task_list")}</button>
-        </div>
+        <span className="vtab" aria-current="true">{t("session.task_list")}</span>
         <span className="projects-spacer" />
         {filter}
       </div>

@@ -51,8 +51,8 @@
 /* No pill, no fill: the view's name is a word on the column's own background,
    the way the rows above it are. Only the current view is inked. */
 .rail .vtabs { display: inline-flex; gap: 2px; padding: 0; border-radius: var(--r-sm); background: transparent; }
-.rail .vtab { height: 22px; padding: 0 6px; border: 0; border-radius: var(--r-xs); background: transparent; color: var(--muted); font: var(--w-reg) var(--fs-meta) var(--ui); cursor: pointer; }
-.rail .vtab[aria-pressed="true"] { background: transparent; color: var(--text); font-weight: var(--w-med); }
+.rail .vtab { height: 22px; padding: 0 6px; border: 0; border-radius: var(--r-xs); background: transparent; color: var(--muted); font: var(--w-reg) var(--fs-meta) var(--ui); }
+.rail .vtab[aria-current="true"] { color: var(--text); font-weight: var(--w-med); }
 .rail .projects-spacer { flex: 1; }
 .rail .session-filter-trigger { height: 24px; padding: 0 8px; gap: 3px; border-radius: var(--r-sm); font: var(--w-reg) var(--fs-meta) var(--ui); color: var(--muted); background: transparent; }
 .rail .projects-add { width: 28px; height: 28px; padding: 0; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--muted); display: inline-grid; place-items: center; flex: none; }
