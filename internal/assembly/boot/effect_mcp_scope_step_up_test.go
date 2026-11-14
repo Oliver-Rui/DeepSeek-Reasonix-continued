@@ -340,7 +340,7 @@ model = "x"
 	approvals := make(chan event.Approval, 8)
 	var mu sync.Mutex
 	var seen []event.Event
-	ctrl, err := Build(context.Background(), Options{Sink: event.FuncSink(func(e event.Event) {
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.FuncSink(func(e event.Event) {
 		mu.Lock()
 		seen = append(seen, e)
 		mu.Unlock()

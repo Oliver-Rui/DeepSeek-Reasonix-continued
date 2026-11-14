@@ -50,7 +50,7 @@ model = "x"
 	invocation := strings.Fields(prompts)[0]
 	rec := testutil.NewMock("prompt-inventory", testutil.Turn{Text: "ok"})
 	setBootTokenProfileTestProvider(t, rec)
-	ctrl, err := Build(t.Context(), Options{Sink: event.Discard, SessionDir: filepath.Join(robustTempDir(t), "sessions")})
+	ctrl, err := Build(t.Context(), Options{WorkspaceRoot: workspace, Sink: event.Discard, SessionDir: filepath.Join(robustTempDir(t), "sessions")})
 	if err != nil {
 		t.Fatal(err)
 	}

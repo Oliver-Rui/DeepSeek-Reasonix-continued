@@ -36,7 +36,7 @@ model = "executor-model"
 		}
 	})
 
-	ctrl, err := Build(context.Background(), Options{Sink: sink})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: sink})
 	if err != nil {
 		t.Fatalf("an unusable optional planner must not block startup: %v", err)
 	}

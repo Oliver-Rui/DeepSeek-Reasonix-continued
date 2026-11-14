@@ -29,7 +29,7 @@ func TestBuildReportsPhasesToHostBeforeReturning(t *testing.T) {
 	t.Chdir(dir)
 	writeFile(t, dir, "reasonix.toml", "[environment]\nenabled = false\n")
 	var phases []Phase
-	ctrl, err := Build(context.Background(), Options{
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir,
 		Sink:    event.Discard,
 		OnPhase: func(p Phase) { phases = append(phases, p) },
 	})

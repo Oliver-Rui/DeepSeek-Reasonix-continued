@@ -49,7 +49,7 @@ func glmTypedMenuWire(t *testing.T, baseURL, model, stored string) map[string]an
 	t.Cleanup(srv.Close)
 	writeFile(t, dir, "reasonix.toml", fmt.Sprintf(glmTypedMenuTOML, model, srv.URL, stored, baseURL))
 	approveWorkspace(t, dir)
-	ctrl, err := Build(context.Background(), Options{Sink: event.Discard})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}

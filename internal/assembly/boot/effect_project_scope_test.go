@@ -105,7 +105,7 @@ func TestEffectProjectConfigCannotChooseTheApprovalPosture(t *testing.T) {
 	registerBootTokenProfileTestProvider()
 	setBootTokenProfileTestProvider(t, testutil.NewMock("posture"))
 
-	ctrl, err := Build(context.Background(), Options{Sink: event.Discard, StatsSource: surface.Desktop})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: root, Sink: event.Discard, StatsSource: surface.Desktop})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -155,7 +155,7 @@ func TestEffectProjectConfigCannotWidenWhatToolsReach(t *testing.T) {
 	registerBootTokenProfileTestProvider()
 	setBootTokenProfileTestProvider(t, prov)
 
-	ctrl, err := Build(context.Background(), Options{Sink: event.Discard})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: root, Sink: event.Discard})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -221,7 +221,7 @@ api_key_env = "DEEPSEEK_API_KEY"
 	registerBootTokenProfileTestProvider()
 	setBootTokenProfileTestProvider(t, prov)
 
-	ctrl, err := Build(context.Background(), Options{Sink: event.Discard})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: root, Sink: event.Discard})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}

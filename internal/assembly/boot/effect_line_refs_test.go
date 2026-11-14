@@ -28,7 +28,7 @@ model = "x"
 	writeFile(t, dir, "source.txt", "EXCLUDED-FIRST\nOLD-SELECTED\nEXCLUDED-LAST\n")
 	approveWorkspace(t, dir)
 	done := make(chan struct{}, 8)
-	ctrl, err := Build(t.Context(), Options{Sink: event.FuncSink(func(e event.Event) {
+	ctrl, err := Build(t.Context(), Options{WorkspaceRoot: dir, Sink: event.FuncSink(func(e event.Event) {
 		if e.Kind == event.TurnDone {
 			done <- struct{}{}
 		}

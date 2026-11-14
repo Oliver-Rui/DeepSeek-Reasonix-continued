@@ -28,7 +28,7 @@ func TestEffectBuildStartsWithNoProviderAndRefusesATurnWithAnIdentity(t *testing
 	t.Setenv("REASONIX_HOME", userDir)
 	approveWorkspace(t, dir)
 
-	ctrl, err := Build(context.Background(), Options{Sink: event.Discard})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard})
 	if err != nil {
 		t.Fatalf("Build with no provider: %v", err)
 	}

@@ -23,7 +23,7 @@ func TestBuildIgnoresSafeModeEnvForTools(t *testing.T) {
 	t.Chdir(dir)
 	t.Setenv("REASONIX_SAFE_MODE", "1")
 
-	ctrl, err := Build(context.Background(), Options{
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir,
 		SessionDir: filepath.Join(robustTempDir(t), "sessions"),
 		TokenMode:  TokenModeFull,
 		Sink:       event.Discard,
@@ -83,7 +83,7 @@ func TestBuildNormalModeKeepsSourceConnectorAndSkillTools(t *testing.T) {
 	t.Setenv("REASONIX_SAFE_MODE", "")
 
 	for _, tokenMode := range []string{TokenModeFull, TokenModeEconomy} {
-		ctrl, err := Build(context.Background(), Options{
+		ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir,
 			SessionDir: filepath.Join(robustTempDir(t), "sessions"),
 			TokenMode:  tokenMode,
 			Sink:       event.Discard,
@@ -125,7 +125,7 @@ func TestBuildStillSpawnsExtraPluginsWhenSafeModeEnvSet(t *testing.T) {
 	t.Chdir(workspace)
 	t.Setenv("REASONIX_SAFE_MODE", "1")
 	marker := filepath.Join(plugin.MCPStateDir(config.ReasonixHomeDir(), workspace, "acp-extra"), "started")
-	ctrl, err := Build(context.Background(), Options{
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: workspace,
 		SessionDir: filepath.Join(robustTempDir(t), "sessions"),
 		Sink:       event.Discard,
 		ExtraPlugins: []plugin.Spec{{

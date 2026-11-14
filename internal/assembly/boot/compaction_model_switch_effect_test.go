@@ -155,7 +155,7 @@ api_key_env = "BOOT_KIND_TEST_KEY"
 
 	var want string
 	for _, name := range []string{"oai", "ant", "resp"} {
-		ctrl, err := Build(context.Background(), Options{Model: name, Sink: event.Discard})
+		ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Model: name, Sink: event.Discard})
 		if err != nil {
 			t.Fatalf("Build %s: %v", name, err)
 		}

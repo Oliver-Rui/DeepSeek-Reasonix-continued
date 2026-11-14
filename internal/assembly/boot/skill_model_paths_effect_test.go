@@ -92,7 +92,7 @@ model = "x"
 		writeFile(t, dir, ".reasonix/skills/"+name+"/SKILL.md", body)
 	}
 	log := &projectionEventLog{}
-	ctrl, err := Build(context.Background(), Options{Sink: log})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: log})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}

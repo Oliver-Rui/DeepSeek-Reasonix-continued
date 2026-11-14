@@ -30,7 +30,7 @@ model = "x"
 `)
 	approveWorkspace(t, dir)
 
-	oldCtrl, err := Build(context.Background(), Options{Sink: event.Discard})
+	oldCtrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -39,7 +39,7 @@ model = "x"
 		return "", ctx.Err()
 	})
 
-	res, err := BuildRuntime(context.Background(), Options{
+	res, err := BuildRuntime(context.Background(), Options{WorkspaceRoot: dir,
 		Sink: event.Discard, Jobs: oldCtrl.JobManager(), WorkspaceLease: oldCtrl.WorkspaceLeaseOwner(),
 	})
 	if err != nil {

@@ -40,7 +40,7 @@ model = "x"
 `)
 			approveWorkspace(t, dir)
 
-			ctrl, err := Build(context.Background(), Options{
+			ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir,
 				Sink:                 event.Discard,
 				GoalTurnsUnreachable: tc.unreachable,
 			})

@@ -41,7 +41,7 @@ model = "x"
 	}
 	writeFile(t, skillDir, "SKILL.md", "---\nname: "+skillName+"\ndescription: "+skillDesc+"\n---\n\nBody.\n")
 
-	ctrl, err := Build(context.Background(), Options{Sink: event.Discard, Ablation: ablation.Set{}})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard, Ablation: ablation.Set{}})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}

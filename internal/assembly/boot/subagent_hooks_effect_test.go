@@ -142,7 +142,7 @@ model = "x"
 				t.Fatal(err)
 			}
 
-			ctrl, err := Build(context.Background(), Options{Sink: event.Discard, SessionDir: filepath.Join(dir, "sessions")})
+			ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard, SessionDir: filepath.Join(dir, "sessions")})
 			if err != nil {
 				t.Fatalf("Build: %v", err)
 			}

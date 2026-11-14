@@ -77,7 +77,7 @@ model = "x"
 	check := func(t *testing.T, present bool) {
 		t.Helper()
 		rec = &effectRecordingProvider{}
-		ctrl, err := Build(t.Context(), Options{Sink: event.Discard, SessionDir: filepath.Join(robustTempDir(t), "sessions")})
+		ctrl, err := Build(t.Context(), Options{WorkspaceRoot: workspace, Sink: event.Discard, SessionDir: filepath.Join(robustTempDir(t), "sessions")})
 		if err != nil {
 			t.Fatal(err)
 		}

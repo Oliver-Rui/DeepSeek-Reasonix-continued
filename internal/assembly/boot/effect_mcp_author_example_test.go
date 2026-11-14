@@ -104,7 +104,7 @@ model = "x"
 			{"use_capability", `{"action":"call","capability_id":"mcp-tool:line_counter/count_lines","arguments":{"text":"first\nsecond\n"}}`},
 			{"use_capability", `{"action":"call","capability_id":"mcp-tool:line_counter/count_lines","arguments":{"text":""}}`},
 		}}
-		ctrl, err := Build(t.Context(), Options{Sink: event.Discard})
+		ctrl, err := Build(t.Context(), Options{WorkspaceRoot: workspace, Sink: event.Discard})
 		if err != nil {
 			t.Fatal(err)
 		}

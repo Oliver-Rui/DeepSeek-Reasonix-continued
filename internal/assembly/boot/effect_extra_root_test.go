@@ -60,7 +60,7 @@ kind = "`+kind+`"
 model = "x"
 `)
 	approveWorkspace(t, dir)
-	ctrl, err := Build(context.Background(), Options{Sink: event.Discard})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -82,7 +82,7 @@ model = "x"
 				t.Skipf("symlinks unavailable: %v", err)
 			}
 		}
-		if ctrl, err = Build(context.Background(), Options{Sink: event.Discard}); err != nil {
+		if ctrl, err = Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard}); err != nil {
 			t.Fatalf("rebuild: %v", err)
 		}
 	}

@@ -51,7 +51,7 @@ model = "y"
 				"env":        map[string]string{bootFakeEnvReplaceInput: "EXTENSION INPUT"},
 			})
 			sink := &noticeSink{}
-			serving, err := BuildRuntime(t.Context(), Options{Sink: sink})
+			serving, err := BuildRuntime(t.Context(), Options{WorkspaceRoot: dir, Sink: sink})
 			if err != nil {
 				t.Fatal(err)
 			}

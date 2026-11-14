@@ -63,7 +63,7 @@ func TestBootSystemPromptStrategyAttribution(t *testing.T) {
 	home := config.ReasonixHomeDir()
 
 	// Baseline: no sidecars — no dispatcher, and the golden-path fingerprint.
-	plain, err := BuildRuntime(context.Background(), Options{})
+	plain, err := BuildRuntime(context.Background(), Options{WorkspaceRoot: dir})
 	if err != nil {
 		t.Fatalf("BuildRuntime: %v", err)
 	}
@@ -78,7 +78,7 @@ func TestBootSystemPromptStrategyAttribution(t *testing.T) {
 	installBootFakePlugin(t, home, "observer", map[string]any{
 		"intercepts": []string{"input.receive"},
 	})
-	observed, err := BuildRuntime(context.Background(), Options{})
+	observed, err := BuildRuntime(context.Background(), Options{WorkspaceRoot: dir})
 	if err != nil {
 		t.Fatalf("BuildRuntime with observer: %v", err)
 	}
@@ -98,7 +98,7 @@ func TestBootSystemPromptStrategyAttribution(t *testing.T) {
 		"replaces": []string{"system_prompt"},
 		"env":      map[string]string{bootFakeEnvReplacePrompt: "PROMPT A"},
 	})
-	buildA, err := BuildRuntime(context.Background(), Options{})
+	buildA, err := BuildRuntime(context.Background(), Options{WorkspaceRoot: dir})
 	if err != nil {
 		t.Fatalf("BuildRuntime with strategist A: %v", err)
 	}
@@ -114,7 +114,7 @@ func TestBootSystemPromptStrategyAttribution(t *testing.T) {
 		"replaces": []string{"system_prompt"},
 		"env":      map[string]string{bootFakeEnvReplacePrompt: "PROMPT B"},
 	})
-	buildB, err := BuildRuntime(context.Background(), Options{})
+	buildB, err := BuildRuntime(context.Background(), Options{WorkspaceRoot: dir})
 	if err != nil {
 		t.Fatalf("BuildRuntime with strategist B: %v", err)
 	}
@@ -142,7 +142,7 @@ func TestBootStableExtensionCacheGuard(t *testing.T) {
 		"env":      map[string]string{bootFakeEnvReplacePrompt: "STABLE EXTENSION PROMPT"},
 	})
 
-	first, err := BuildRuntime(context.Background(), Options{})
+	first, err := BuildRuntime(context.Background(), Options{WorkspaceRoot: dir})
 	if err != nil {
 		t.Fatalf("first BuildRuntime: %v", err)
 	}
@@ -157,7 +157,7 @@ func TestBootStableExtensionCacheGuard(t *testing.T) {
 	firstSessionPrompt := systemMessage(first.Controller.History())
 	first.Controller.Close()
 
-	second, err := BuildRuntime(context.Background(), Options{})
+	second, err := BuildRuntime(context.Background(), Options{WorkspaceRoot: dir})
 	if err != nil {
 		t.Fatalf("second BuildRuntime: %v", err)
 	}
@@ -199,7 +199,7 @@ func TestBootSystemPromptStrategyFailureFailsBuild(t *testing.T) {
 			"replaces": []string{"system_prompt"},
 			"env":      map[string]string{bootFakeEnvBlockEvent: "system_prompt.build"},
 		})
-		_, err := BuildRuntime(context.Background(), Options{})
+		_, err := BuildRuntime(context.Background(), Options{WorkspaceRoot: dir})
 		if err == nil {
 			t.Fatal("BuildRuntime succeeded with a blocking system_prompt owner")
 		}
@@ -217,7 +217,7 @@ func TestBootSystemPromptStrategyFailureFailsBuild(t *testing.T) {
 			"replaces": []string{"system_prompt"},
 			"env":      map[string]string{bootFakeEnvInvalidEvent: "system_prompt.build"},
 		})
-		_, err := BuildRuntime(context.Background(), Options{})
+		_, err := BuildRuntime(context.Background(), Options{WorkspaceRoot: dir})
 		if err == nil {
 			t.Fatal("BuildRuntime succeeded with a DTO-violating system_prompt owner")
 		}
@@ -246,7 +246,7 @@ func TestBootSystemPromptBuildEventObserved(t *testing.T) {
 		"intercepts": []string{"system_prompt.build"},
 		"env":        map[string]string{bootFakeEnvEventLog: eventLog},
 	})
-	res, err := BuildRuntime(context.Background(), Options{})
+	res, err := BuildRuntime(context.Background(), Options{WorkspaceRoot: dir})
 	if err != nil {
 		t.Fatalf("BuildRuntime: %v", err)
 	}

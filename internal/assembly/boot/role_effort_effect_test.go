@@ -63,7 +63,7 @@ supported_efforts = ["low", "medium", "high"]
 reasoning_protocol = "openai"
 `, roleSettings, kind))
 			approveWorkspace(t, root)
-			ctrl, err := Build(context.Background(), Options{Sink: event.Discard})
+			ctrl, err := Build(context.Background(), Options{WorkspaceRoot: root, Sink: event.Discard})
 			if err != nil {
 				t.Fatal(err)
 			}

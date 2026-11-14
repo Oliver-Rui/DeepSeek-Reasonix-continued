@@ -59,7 +59,7 @@ func TestEffectInstalledPluginHTTPMCPToolCanBeCalledAndDisabled(t *testing.T) {
 		t.Fatalf("installation = %s", out)
 	}
 
-	ctrl, err := Build(t.Context(), Options{Sink: event.Discard})
+	ctrl, err := Build(t.Context(), Options{WorkspaceRoot: workspace, Sink: event.Discard})
 	if err != nil {
 		t.Fatalf("Build enabled package: %v", err)
 	}
@@ -84,7 +84,7 @@ func TestEffectInstalledPluginHTTPMCPToolCanBeCalledAndDisabled(t *testing.T) {
 	if err := pluginpkg.SetEnabled(reasonixHome, "ecosystem-http", false); err != nil {
 		t.Fatal(err)
 	}
-	disabled, err := Build(t.Context(), Options{Sink: event.Discard})
+	disabled, err := Build(t.Context(), Options{WorkspaceRoot: workspace, Sink: event.Discard})
 	if err != nil {
 		t.Fatalf("Build disabled package: %v", err)
 	}

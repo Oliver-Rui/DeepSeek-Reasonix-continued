@@ -120,7 +120,7 @@ model = "x"
 				})
 			}
 		}
-		res, err := BuildRuntime(t.Context(), Options{Sink: event.Discard})
+		res, err := BuildRuntime(t.Context(), Options{WorkspaceRoot: workspace, Sink: event.Discard})
 		if err != nil {
 			t.Fatal(err)
 		}

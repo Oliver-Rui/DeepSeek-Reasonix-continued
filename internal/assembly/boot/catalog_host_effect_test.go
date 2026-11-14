@@ -66,7 +66,7 @@ price = { cache_hit = 0.15, input = 4.5, output = 13.5, currency = "¥" }
 		}
 	})
 
-	ctrl, err := Build(context.Background(), Options{Sink: sink})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: sink})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}

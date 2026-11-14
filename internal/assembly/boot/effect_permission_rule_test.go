@@ -13,7 +13,8 @@ import (
 // built-in tool say nothing.
 func TestEffectPermissionRulesNamingNoToolAreReportedAtLoad(t *testing.T) {
 	isolateConfigHome(t)
-	t.Chdir(robustTempDir(t))
+	dir := robustTempDir(t)
+	t.Chdir(dir)
 	writeUserConfig(t, userModel+"\n[permissions]\nask = [\"rm\", \"Bash(git push:*)\", \"mcp__later__tool\"]\ndeny = [\"git reset\", \"read_file(*.env*)\"]\n")
 	registerBootTokenProfileTestProvider()
 	setBootTokenProfileTestProvider(t, testutil.NewMock("rules"))
@@ -23,7 +24,7 @@ func TestEffectPermissionRulesNamingNoToolAreReportedAtLoad(t *testing.T) {
 			notices = append(notices, e)
 		}
 	})
-	ctrl, err := Build(context.Background(), Options{Sink: sink})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: sink})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}

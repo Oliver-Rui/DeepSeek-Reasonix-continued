@@ -26,7 +26,7 @@ api_key_env = "REASONIX_TEST_KEY_UNSET"
 `)
 	approveWorkspace(t, dir)
 
-	ctrl, err := Build(context.Background(), Options{})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -72,7 +72,7 @@ api_key_env = "REASONIX_TEST_KEY_UNSET"
 `+environmentSection)
 		approveWorkspace(t, dir)
 
-		ctrl, err := Build(context.Background(), Options{})
+		ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir})
 		if err != nil {
 			t.Fatalf("Build: %v", err)
 		}

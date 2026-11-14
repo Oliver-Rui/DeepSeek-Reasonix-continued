@@ -45,7 +45,7 @@ func bootWithFakeUIPlugin(t *testing.T, name string, runtime map[string]any, sin
 	t.Chdir(dir)
 	writeRuntimeFixture(t, dir)
 	installBootFakePlugin(t, config.ReasonixHomeDir(), name, runtime)
-	res, err := BuildRuntime(context.Background(), Options{Sink: sink})
+	res, err := BuildRuntime(context.Background(), Options{WorkspaceRoot: dir, Sink: sink})
 	if err != nil {
 		t.Fatalf("BuildRuntime: %v", err)
 	}
@@ -127,7 +127,7 @@ func TestBootExtensionUIHubNilWithoutPlugins(t *testing.T) {
 	dir := robustTempDir(t)
 	t.Chdir(dir)
 	writeRuntimeFixture(t, dir)
-	res, err := BuildRuntime(context.Background(), Options{})
+	res, err := BuildRuntime(context.Background(), Options{WorkspaceRoot: dir})
 	if err != nil {
 		t.Fatalf("BuildRuntime: %v", err)
 	}
@@ -160,7 +160,7 @@ func TestRebuildRebindsExtensionUIHub(t *testing.T) {
 	}
 	oldGeneration := old.ExtensionUI.Generation()
 
-	newRes, err := Rebuild(context.Background(), old.Controller, Options{})
+	newRes, err := Rebuild(context.Background(), old.Controller, Options{WorkspaceRoot: fixtureRoot(t)})
 	if err != nil {
 		t.Fatalf("Rebuild: %v", err)
 	}

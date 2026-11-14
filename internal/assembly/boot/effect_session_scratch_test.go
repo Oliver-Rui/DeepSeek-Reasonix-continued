@@ -95,7 +95,7 @@ func TestEffectSessionScratchIsReachableByItsSpelling(t *testing.T) {
 	}
 	writeUserConfig(t, "[sandbox]\nbash = \"off\"\n")
 	writeFile(t, dir, "reasonix.toml", "\n[agent]\nsystem_prompt = \"BASE\"\n")
-	ctrl, err := Build(context.Background(), Options{Sink: event.Discard, Model: "test-model/x", ProviderResolver: resolver, resolvedShell: pinnedEffectShell()})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard, Model: "test-model/x", ProviderResolver: resolver, resolvedShell: pinnedEffectShell()})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}

@@ -79,7 +79,7 @@ kind = "`+kind+`"
 model = "x"
 `)
 	approveWorkspace(t, dir)
-	ctrl, err := Build(context.Background(), Options{Sink: &watchSink{}})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: &watchSink{}})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}

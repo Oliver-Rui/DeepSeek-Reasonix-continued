@@ -92,7 +92,7 @@ func TestEffectPluginUpdateReplacesHTTPMCPContributions(t *testing.T) {
 	}
 	callInstalled := func(name, absent string) {
 		t.Helper()
-		ctrl, err := Build(t.Context(), Options{Sink: event.Discard})
+		ctrl, err := Build(t.Context(), Options{WorkspaceRoot: workspace, Sink: event.Discard})
 		if err != nil {
 			t.Fatalf("Build after installation: %v", err)
 		}

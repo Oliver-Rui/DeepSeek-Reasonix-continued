@@ -76,7 +76,7 @@ model = "x"
 		run.mu.Unlock()
 		go ref.Load().Approve(e.Approval.ID, false, false, false)
 	})
-	ctrl, err := Build(context.Background(), Options{Sink: sink, StatsSource: surface.Desktop})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: sink, StatsSource: surface.Desktop})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -204,7 +204,7 @@ name = "test-model"
 kind = "boot-posture"
 model = "x"
 `)
-	ctrl, err := Build(context.Background(), Options{Sink: event.Discard, StatsSource: surface.Desktop})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: home, Sink: event.Discard, StatsSource: surface.Desktop})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}

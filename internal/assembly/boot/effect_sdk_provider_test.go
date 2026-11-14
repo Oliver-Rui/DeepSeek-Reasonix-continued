@@ -86,7 +86,7 @@ func TestEffectInstalledSDKProviderCompletesFirstTurn(t *testing.T) {
 	}
 	runPhase := func(t *testing.T, enabled bool) {
 		t.Helper()
-		res, err := BuildRuntime(t.Context(), Options{Sink: event.Discard})
+		res, err := BuildRuntime(t.Context(), Options{WorkspaceRoot: workspace, Sink: event.Discard})
 		if !enabled {
 			if res != nil {
 				res.Controller.Close()

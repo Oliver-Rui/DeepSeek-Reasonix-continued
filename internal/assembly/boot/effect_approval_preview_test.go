@@ -63,7 +63,7 @@ model = "x"
 		}
 	})
 	var err error
-	ctrl, err = Build(context.Background(), Options{Sink: sink, SessionDir: filepath.Join(dir, "sessions")})
+	ctrl, err = Build(context.Background(), Options{WorkspaceRoot: dir, Sink: sink, SessionDir: filepath.Join(dir, "sessions")})
 	ready.Done()
 	if err != nil {
 		t.Fatal(err)

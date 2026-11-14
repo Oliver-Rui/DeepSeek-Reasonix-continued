@@ -55,7 +55,7 @@ func TestEffectBashOutputListsRunningJobsThroughRealBuild(t *testing.T) {
 [agent]
 system_prompt = "BASE"
 `)
-	ctrl, err := Build(context.Background(), Options{Sink: event.Discard, Model: "test-model/x", ProviderResolver: resolver})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard, Model: "test-model/x", ProviderResolver: resolver})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}

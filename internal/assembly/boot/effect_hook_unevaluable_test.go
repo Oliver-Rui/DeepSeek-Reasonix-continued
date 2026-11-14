@@ -49,7 +49,7 @@ func TestEffectUnevaluablePreToolUseHookBlocksTheCall(t *testing.T) {
 					notices = append(notices, e)
 				}
 			})
-			ctrl, err := Build(context.Background(), Options{Sink: sink, SessionDir: filepath.Join(dir, "sessions")})
+			ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: sink, SessionDir: filepath.Join(dir, "sessions")})
 			if err != nil {
 				t.Fatalf("Build: %v", err)
 			}

@@ -36,7 +36,8 @@ func staleDefaultNotices(notices *[]event.Event) event.Sink {
 // leaves the config file exactly as the user wrote it.
 func TestEffectStaleDefaultModelOpensOnAFallback(t *testing.T) {
 	isolateConfigHome(t)
-	t.Chdir(robustTempDir(t))
+	dir := robustTempDir(t)
+	t.Chdir(dir)
 	writeUserConfig(t, staleDefaultUserConfig)
 	before, err := os.ReadFile(config.UserConfigPath())
 	if err != nil {
@@ -46,7 +47,7 @@ func TestEffectStaleDefaultModelOpensOnAFallback(t *testing.T) {
 	setBootTokenProfileTestProvider(t, testutil.NewMock("fallback"))
 
 	var notices []event.Event
-	res, err := BuildRuntime(context.Background(), Options{
+	res, err := BuildRuntime(context.Background(), Options{WorkspaceRoot: dir,
 		Sink:                staleDefaultNotices(&notices),
 		StatsSource:         surface.Desktop,
 		OpenOnFallbackModel: true,
@@ -84,7 +85,8 @@ func TestEffectStaleDefaultModelFailsUnlessAWindowAsks(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			isolateConfigHome(t)
-			t.Chdir(robustTempDir(t))
+			dir := robustTempDir(t)
+			t.Chdir(dir)
 			writeUserConfig(t, staleDefaultUserConfig)
 			registerBootTokenProfileTestProvider()
 			setBootTokenProfileTestProvider(t, testutil.NewMock("explicit"))
@@ -101,13 +103,14 @@ func TestEffectStaleDefaultModelFailsUnlessAWindowAsks(t *testing.T) {
 // name the 1.x line writes.
 func TestEffectResolvableDefaultModelSaysNothing(t *testing.T) {
 	isolateConfigHome(t)
-	t.Chdir(robustTempDir(t))
+	dir := robustTempDir(t)
+	t.Chdir(dir)
 	writeUserConfig(t, strings.Replace(staleDefaultUserConfig, `"deepseek-v4-flash"`, `"deepseek-flash"`, 1))
 	registerBootTokenProfileTestProvider()
 	setBootTokenProfileTestProvider(t, testutil.NewMock("legacy"))
 
 	var notices []event.Event
-	res, err := BuildRuntime(context.Background(), Options{Sink: staleDefaultNotices(&notices), StatsSource: surface.Desktop, OpenOnFallbackModel: true})
+	res, err := BuildRuntime(context.Background(), Options{WorkspaceRoot: dir, Sink: staleDefaultNotices(&notices), StatsSource: surface.Desktop, OpenOnFallbackModel: true})
 	if err != nil {
 		t.Fatalf("BuildRuntime: %v", err)
 	}
@@ -124,7 +127,8 @@ func TestEffectResolvableDefaultModelSaysNothing(t *testing.T) {
 // keyless model, where the missing-key recovery takes over.
 func TestEffectStaleDefaultModelWithNoKeyStillOpens(t *testing.T) {
 	isolateConfigHome(t)
-	t.Chdir(robustTempDir(t))
+	dir := robustTempDir(t)
+	t.Chdir(dir)
 	writeUserConfig(t, `
 default_model = "deepseek-v4-flash"
 
@@ -137,7 +141,7 @@ models = ["deepseek-flash", "deepseek-pro"]
 `)
 
 	var notices []event.Event
-	res, err := BuildRuntime(context.Background(), Options{Sink: staleDefaultNotices(&notices), StatsSource: surface.Desktop, OpenOnFallbackModel: true})
+	res, err := BuildRuntime(context.Background(), Options{WorkspaceRoot: dir, Sink: staleDefaultNotices(&notices), StatsSource: surface.Desktop, OpenOnFallbackModel: true})
 	if err != nil {
 		t.Fatalf("BuildRuntime with a stale default and no key: %v", err)
 	}
@@ -154,7 +158,8 @@ models = ["deepseek-flash", "deepseek-pro"]
 // moved past the retired flash name, while default_model still names it bare.
 func TestEffectRetiredBareDeepSeekDefaultOpensOnFlash(t *testing.T) {
 	isolateConfigHome(t)
-	t.Chdir(robustTempDir(t))
+	dir := robustTempDir(t)
+	t.Chdir(dir)
 	writeUserConfig(t, `config_version = 1
 default_model = "deepseek-v4-flash"
 
@@ -171,7 +176,7 @@ api_key_env = "DEEPSEEK_API_KEY"
 	}
 
 	var notices []event.Event
-	res, err := BuildRuntime(context.Background(), Options{Sink: staleDefaultNotices(&notices), StatsSource: surface.Desktop, OpenOnFallbackModel: true})
+	res, err := BuildRuntime(context.Background(), Options{WorkspaceRoot: dir, Sink: staleDefaultNotices(&notices), StatsSource: surface.Desktop, OpenOnFallbackModel: true})
 	if err != nil {
 		t.Fatalf("BuildRuntime with a retired bare default: %v", err)
 	}
@@ -196,7 +201,8 @@ api_key_env = "DEEPSEEK_API_KEY"
 // conversation source and the notice says which of the two it is.
 func TestEffectDecisionSourceDefaultOpensOnAConversationModel(t *testing.T) {
 	isolateConfigHome(t)
-	t.Chdir(robustTempDir(t))
+	dir := robustTempDir(t)
+	t.Chdir(dir)
 	writeUserConfig(t, `
 default_model = "laya/typed-decisions"
 
@@ -215,7 +221,7 @@ model = "deepseek-flash"
 	setBootTokenProfileTestProvider(t, testutil.NewMock("fallback"))
 
 	var notices []event.Event
-	res, err := BuildRuntime(context.Background(), Options{Sink: staleDefaultNotices(&notices), StatsSource: surface.Desktop, OpenOnFallbackModel: true})
+	res, err := BuildRuntime(context.Background(), Options{WorkspaceRoot: dir, Sink: staleDefaultNotices(&notices), StatsSource: surface.Desktop, OpenOnFallbackModel: true})
 	if err != nil {
 		t.Fatalf("BuildRuntime with a decision source as default: %v", err)
 	}
@@ -237,7 +243,8 @@ model = "deepseek-flash"
 // says so with the same notice the window gives instead of switching silently.
 func TestEffectDecisionSourceDefaultIsReportedWithoutAFallbackRequest(t *testing.T) {
 	isolateConfigHome(t)
-	t.Chdir(robustTempDir(t))
+	dir := robustTempDir(t)
+	t.Chdir(dir)
 	writeUserConfig(t, `
 default_model = "laya/typed-decisions"
 
@@ -256,7 +263,7 @@ model = "deepseek-flash"
 	setBootTokenProfileTestProvider(t, testutil.NewMock("fallback"))
 
 	var notices []event.Event
-	res, err := BuildRuntime(context.Background(), Options{Sink: staleDefaultNotices(&notices)})
+	res, err := BuildRuntime(context.Background(), Options{WorkspaceRoot: dir, Sink: staleDefaultNotices(&notices)})
 	if err != nil {
 		t.Fatalf("BuildRuntime with a decision source as default: %v", err)
 	}

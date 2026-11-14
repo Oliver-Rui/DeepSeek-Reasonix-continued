@@ -180,7 +180,7 @@ func TestEffectPreToolUseCoversPlannerReads(t *testing.T) {
 				}
 			}
 
-			ctrl, err := Build(context.Background(), Options{Sink: event.Discard, SessionDir: filepath.Join(dir, "sessions")})
+			ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard, SessionDir: filepath.Join(dir, "sessions")})
 			if err != nil {
 				t.Fatalf("Build: %v", err)
 			}
@@ -225,7 +225,7 @@ func TestEffectPreToolUseCoversGuardianReads(t *testing.T) {
 			go func() { ready.Wait(); ctrl.Approve(id, false, false, false) }()
 		}
 	})
-	ctrl, err := Build(context.Background(), Options{Sink: sink, SessionDir: filepath.Join(dir, "sessions")})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: sink, SessionDir: filepath.Join(dir, "sessions")})
 	ready.Done()
 	if err != nil {
 		t.Fatalf("Build: %v", err)
@@ -258,7 +258,7 @@ func TestEffectPlannerHookSessionFollowsRotation(t *testing.T) {
 	if err := hook.ApproveSavedProjectHooks(hook.LoadOptions{ProjectRoot: dir}, settings); err != nil {
 		t.Fatal(err)
 	}
-	ctrl, err := Build(context.Background(), Options{Sink: event.Discard, SessionDir: filepath.Join(dir, "sessions")})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard, SessionDir: filepath.Join(dir, "sessions")})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}

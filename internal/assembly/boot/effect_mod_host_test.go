@@ -146,7 +146,11 @@ func setModsSwitch(t *testing.T, on bool) {
 func runModTurn(t *testing.T, prov *modProvider, command string) {
 	t.Helper()
 	prov.command = command
-	res, err := BuildRuntime(t.Context(), Options{Sink: event.Discard})
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, err := BuildRuntime(t.Context(), Options{WorkspaceRoot: wd, Sink: event.Discard})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -235,7 +239,7 @@ export function register(on) {
 }`)
 	setModsSwitch(t, true)
 	prov.command = "touch refused-check.txt"
-	res, err := BuildRuntime(t.Context(), Options{Sink: event.Discard})
+	res, err := BuildRuntime(t.Context(), Options{WorkspaceRoot: fixtureRoot(t), Sink: event.Discard})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -309,7 +313,11 @@ export function register(on) {
 					mu.Unlock()
 				}
 			})
-			res, err := BuildRuntime(t.Context(), Options{Sink: sink})
+			wd, err := os.Getwd()
+			if err != nil {
+				t.Fatal(err)
+			}
+			res, err := BuildRuntime(t.Context(), Options{WorkspaceRoot: wd, Sink: sink})
 			if err != nil {
 				t.Fatal(err)
 			}

@@ -91,7 +91,10 @@ model = "x"
 `)
 	approveWorkspace(t, dir)
 
-	ctrl, err := Build(context.Background(), Options{Sink: event.Discard, TokenMode: tokenMode, Ablation: arm})
+	// WorkspaceRoot is stated for every fixture build: the cwd fallback walks up
+	// for .git, so a repository above the temp dir (a dotfiles home, say) would
+	// win and silently swap this fixture's config out of the capture.
+	ctrl, err := Build(context.Background(), Options{Sink: event.Discard, TokenMode: tokenMode, Ablation: arm, WorkspaceRoot: dir})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -287,7 +290,7 @@ model = "x"
 `)
 	approveWorkspace(t, dir)
 
-	ctrl, err := Build(context.Background(), Options{Sink: event.Discard})
+	ctrl, err := Build(context.Background(), Options{Sink: event.Discard, WorkspaceRoot: dir})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -537,7 +540,7 @@ model = "x"
 api_key_env = "REASONIX_TEST_KEY_UNSET"
 `)
 			approveWorkspace(t, dir)
-			ctrl, err := Build(context.Background(), Options{StatsSource: tc.source})
+			ctrl, err := Build(context.Background(), Options{StatsSource: tc.source, WorkspaceRoot: dir})
 			if err != nil {
 				t.Fatal(err)
 			}

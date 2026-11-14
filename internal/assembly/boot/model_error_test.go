@@ -35,7 +35,7 @@ api_key_env = "REASONIX_TEST_KEY_UNSET"
 `)
 	approveWorkspace(t, dir)
 
-	_, err := Build(context.Background(), Options{Sink: event.Discard})
+	_, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard})
 	if err == nil {
 		t.Fatal("expected an error for an unresolvable default_model")
 	}
@@ -70,7 +70,7 @@ default_model = "deepseek-flash"
 	approveWorkspace(t, dir)
 
 	var notices []event.Event
-	ctrl, err := Build(context.Background(), Options{
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir,
 		Sink: event.FuncSink(func(e event.Event) {
 			if e.Kind == event.Notice {
 				notices = append(notices, e)
@@ -109,7 +109,7 @@ api_key_env = "REASONIX_TEST_KEY_UNSET"
 `)
 	approveWorkspace(t, dir)
 
-	ctrl, err := Build(context.Background(), Options{Sink: event.Discard, Model: "mimo-v2.5-pro"})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard, Model: "mimo-v2.5-pro"})
 	if err != nil {
 		t.Fatalf("Build should migrate legacy bare MiMo model override: %v", err)
 	}
@@ -140,7 +140,7 @@ api_key_env = "`+keyEnv+`"
 	approveWorkspace(t, dir)
 
 	var notices []event.Event
-	ctrl, err := Build(context.Background(), Options{
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir,
 		Sink: event.FuncSink(func(e event.Event) {
 			if e.Kind == event.Notice {
 				notices = append(notices, e)
@@ -182,7 +182,7 @@ api_key_env = "`+keyEnv+`"
 	approveWorkspace(t, dir)
 
 	var notices []string
-	ctrl, err := Build(context.Background(), Options{
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir,
 		Sink: event.FuncSink(func(e event.Event) {
 			if e.Kind == event.Notice {
 				notices = append(notices, e.Text)
@@ -247,7 +247,7 @@ api_key_env = "`+configuredEnv+`"
 `)
 	approveWorkspace(t, dir)
 
-	ctrl, err := Build(context.Background(), Options{Sink: event.Discard})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard})
 	if err != nil {
 		t.Fatalf("Build should fall back to a configured provider instead of failing on the keyless default: %v", err)
 	}
@@ -294,7 +294,7 @@ api_key_env = "`+configuredEnv+`"
 `)
 	approveWorkspace(t, dir)
 
-	_, err := Build(context.Background(), Options{
+	_, err := Build(context.Background(), Options{WorkspaceRoot: dir,
 		Sink:       event.Discard,
 		Model:      "deepseek/deepseek-flash",
 		RequireKey: true,

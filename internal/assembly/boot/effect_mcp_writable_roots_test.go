@@ -88,7 +88,7 @@ model = "x"
 `)
 			approveWorkspace(t, dir)
 			logPath := filepath.Join(robustTempDir(t), "meta.jsonl")
-			ctrl, err := Build(context.Background(), Options{
+			ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir,
 				Sink:           event.Discard,
 				WorkspaceOnly:  tc.workspaceOnly,
 				AdditionalDirs: []string{extra},

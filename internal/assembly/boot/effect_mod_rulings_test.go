@@ -108,7 +108,7 @@ func TestEffectAModQueuesAPromptThatReachesTheModelLabelledAsTheMods(t *testing.
 			done <- struct{}{}
 		}
 	})
-	res, err := BuildRuntime(t.Context(), Options{Sink: sink, SessionDir: testenv.TempDir(t)})
+	res, err := BuildRuntime(t.Context(), Options{WorkspaceRoot: fixtureRoot(t), Sink: sink, SessionDir: testenv.TempDir(t)})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -31,7 +31,7 @@ func TestEffectHeldProjectMCPServersAreReportedAtBuild(t *testing.T) {
 		var got []event.Event
 		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 		defer cancel()
-		ctrl, err := Build(ctx, Options{Sink: event.FuncSink(func(e event.Event) {
+		ctrl, err := Build(ctx, Options{WorkspaceRoot: dir, Sink: event.FuncSink(func(e event.Event) {
 			if e.Kind == event.Notice && strings.HasPrefix(e.Code, "project_mcp_") {
 				mu.Lock()
 				got = append(got, e)
@@ -71,7 +71,7 @@ func TestEffectHeldProjectMCPServersAreReportedAtBuild(t *testing.T) {
 	declareRecordingServer(t, dir, ".mcp.json", logPath, "phase2")
 	check(collect(), "project_mcp_changed")
 
-	ctrl, err := Build(t.Context(), Options{Sink: event.Discard})
+	ctrl, err := Build(t.Context(), Options{WorkspaceRoot: dir, Sink: event.Discard})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -72,7 +72,7 @@ model = "x"
 		t.Helper()
 		rec := testutil.NewMock("work-note-example", testutil.Turn{Text: "ok"}, testutil.Turn{Text: "ok"}, testutil.Turn{Text: "ok"})
 		setBootTokenProfileTestProvider(t, rec)
-		ctrl, err := Build(t.Context(), Options{Sink: event.Discard, SessionDir: filepath.Join(robustTempDir(t), "sessions")})
+		ctrl, err := Build(t.Context(), Options{WorkspaceRoot: workspace, Sink: event.Discard, SessionDir: filepath.Join(robustTempDir(t), "sessions")})
 		if err != nil {
 			t.Fatal(err)
 		}

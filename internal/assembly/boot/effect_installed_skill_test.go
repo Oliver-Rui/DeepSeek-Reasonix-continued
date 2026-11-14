@@ -76,7 +76,7 @@ model = "x"
 	var rec *effectRecordingProvider
 	provider.Register("boot-effect-installed-skill", func(provider.Config) (provider.Provider, error) { return rec, nil })
 	rec = &effectRecordingProvider{}
-	ctrl, err := Build(t.Context(), Options{Sink: event.Discard})
+	ctrl, err := Build(t.Context(), Options{WorkspaceRoot: workspace, Sink: event.Discard})
 	if err != nil {
 		t.Fatalf("Build after installation: %v", err)
 	}

@@ -145,7 +145,7 @@ api_key_env = "REASONIX_TEST_KEY_UNSET"
 	approveWorkspace(t, dir)
 	writeFile(t, dir, "REASONIX.md", "Project rule: always run go vet before committing.")
 
-	ctrl, err := Build(context.Background(), Options{}) // RequireKey false: no network/key needed
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir}) // RequireKey false: no network/key needed
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -228,7 +228,7 @@ func TestBuildRunsCleanupPendingDespiteSafeModeEnv(t *testing.T) {
 	t.Setenv("REASONIX_SAFE_MODE", "1")
 
 	called := false
-	ctrl, err := Build(context.Background(), Options{
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir,
 		SessionDir: filepath.Join(robustTempDir(t), "sessions"),
 		CleanupPendingReconciler: func(string) error {
 			called = true
@@ -296,7 +296,7 @@ model = "x"
 	)
 	setBootRetrievalToolTestProvider(t, prov)
 
-	ctrl, err := Build(context.Background(), Options{Sink: event.Discard, SessionDir: sessionDir})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard, SessionDir: sessionDir})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -521,7 +521,11 @@ func captureTokenProfileSurface(t *testing.T, tokenMode string) (provider.Reques
 	prov := testutil.NewMock("token-profile", testutil.Turn{Text: "done"})
 	setBootTokenProfileTestProvider(t, prov)
 
-	opts := Options{Sink: event.Discard}
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	opts := Options{Sink: event.Discard, WorkspaceRoot: wd}
 	if tokenMode != "" {
 		opts.TokenMode = tokenMode
 	}
@@ -571,7 +575,7 @@ model = "x"
 	approveWorkspace(t, dir)
 
 	sessionDir := filepath.Join(robustTempDir(t), "desktop-workspace-sessions")
-	ctrl, err := Build(context.Background(), Options{Sink: event.Discard, SessionDir: sessionDir})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard, SessionDir: sessionDir})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -619,7 +623,7 @@ model = "x"
 `)
 	approveWorkspace(t, dir)
 
-	ctrl, err := Build(context.Background(), Options{Sink: event.Discard})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -734,7 +738,7 @@ vision = true
 	}))
 	defer mcpServer.Close()
 
-	ctrl, err := Build(context.Background(), Options{
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir,
 		Sink: event.Discard,
 		ExtraPlugins: []plugin.Spec{{
 			Name:       "vision-reader",
@@ -831,7 +835,7 @@ model = "x"
 `)
 	approveWorkspace(t, dir)
 
-	ctrl, err := Build(context.Background(), Options{Sink: event.Discard})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -874,7 +878,7 @@ model = "x"
 `)
 	approveWorkspace(t, dir)
 
-	ctrl, err := Build(context.Background(), Options{Sink: event.Discard})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -973,7 +977,7 @@ model = "x"
 	writeFile(t, dir, ".reasonix/skills/roskill.md",
 		"---\ndescription: read-only skill\nrunAs: subagent\nallowed-tools: bash, read_file, write_file\nread-only: true\n---\nread-only body")
 
-	ctrl, err := Build(context.Background(), Options{Sink: event.Discard})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -1036,7 +1040,7 @@ kind = "boot-token-profile-test"
 model = "x"
 `)
 		approveWorkspace(t, dir)
-		ctrl, err := Build(context.Background(), Options{Sink: event.Discard})
+		ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard})
 		if err != nil {
 			t.Fatalf("Build: %v", err)
 		}
@@ -1240,7 +1244,7 @@ model = "x"
 `)
 	approveWorkspace(t, dir)
 
-	ctrl, err := Build(context.Background(), Options{Sink: event.Discard})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -1369,7 +1373,7 @@ model = "x"
 `)
 		approveWorkspace(t, dir)
 
-		ctrl, err := Build(context.Background(), Options{Sink: event.Discard, HeadlessApprovalMode: mode})
+		ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard, HeadlessApprovalMode: mode})
 		if err != nil {
 			t.Fatalf("Build: %v", err)
 		}
@@ -1501,7 +1505,7 @@ model = "x"
 `)
 	approveWorkspace(t, dir)
 
-	ctrl, err := Build(context.Background(), Options{Sink: event.Discard})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -1889,7 +1893,7 @@ api_key_env = "REASONIX_TEST_KEY_UNSET"
 	approveWorkspace(t, dir)
 
 	sessionDir := filepath.Join(robustTempDir(t), "desktop-workspace-sessions")
-	ctrl, err := Build(context.Background(), Options{SessionDir: sessionDir})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, SessionDir: sessionDir})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -1925,7 +1929,7 @@ api_key_env = "REASONIX_TEST_KEY_UNSET"
 	approveWorkspace(t, dir)
 	writeFile(t, dir, ".reasonix/skills/projskill.md", "---\ndescription: a project skill\n---\nplaybook")
 
-	ctrl, err := Build(context.Background(), Options{})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -1969,7 +1973,7 @@ func TestBuildDiscoversSkillsDespiteSafeModeEnv(t *testing.T) {
 	writeFile(t, dir, ".reasonix/skills/project-skill.md", "---\ndescription: project skill\n---\nplaybook")
 	writeFile(t, home, ".reasonix/skills/global-skill.md", "---\ndescription: global skill\n---\nplaybook")
 
-	ctrl, err := Build(context.Background(), Options{SessionDir: filepath.Join(robustTempDir(t), "sessions")})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, SessionDir: filepath.Join(robustTempDir(t), "sessions")})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -2011,7 +2015,7 @@ api_key_env = "REASONIX_TEST_KEY_UNSET"
 		t.Fatal(err)
 	}
 
-	ctrl, err := Build(context.Background(), Options{})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -2252,7 +2256,7 @@ model = "executor-model"%s
 	}
 
 	writeConfig(false)
-	single, err := Build(context.Background(), Options{Sink: event.Discard})
+	single, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -2264,7 +2268,7 @@ model = "executor-model"%s
 	}
 
 	writeConfig(true)
-	dual, err := Build(context.Background(), Options{Sink: event.Discard})
+	dual, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -2486,7 +2490,7 @@ command = "reasonix-missing-mockmcp"
 	approveWorkspace(t, dir)
 	writeFile(t, dir, ".reasonix/skills/projskill.md", "---\ndescription: a project skill\n---\nplaybook")
 
-	ctrl, err := Build(context.Background(), Options{Sink: event.Discard, TokenMode: TokenModeEconomy})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard, TokenMode: TokenModeEconomy})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -2578,7 +2582,7 @@ model = "x"
 				testutil.Turn{Text: "done"},
 			)
 			setBootTokenProfileTestProvider(t, prov)
-			ctrl, err := Build(context.Background(), Options{Sink: event.Discard, TokenMode: TokenModeEconomy})
+			ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard, TokenMode: TokenModeEconomy})
 			if err != nil {
 				t.Fatalf("Build: %v", err)
 			}
@@ -2631,7 +2635,7 @@ model = "x"
 	for _, mode := range []string{TokenModeEconomy, TokenModeFull, TokenModeDelivery, "light", "balanced"} {
 		prov := testutil.NewMock("stable-"+mode, testutil.Turn{Text: "[]"}, testutil.Turn{Text: "done"})
 		setBootTokenProfileTestProvider(t, prov)
-		ctrl, err := Build(context.Background(), Options{Sink: event.Discard, TokenMode: mode, AgentPreset: mode})
+		ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard, TokenMode: mode, AgentPreset: mode})
 		if err != nil {
 			t.Fatalf("Build(%q): %v", mode, err)
 		}
@@ -2697,7 +2701,7 @@ model = "x"
 		testutil.Turn{Text: "done"},
 	)
 	setBootTokenProfileTestProvider(t, prov)
-	ctrl, err := Build(context.Background(), Options{Sink: event.Discard})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -2749,7 +2753,7 @@ model = "x"
 		}
 	})
 
-	ctrl, err := Build(context.Background(), Options{Sink: sink})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: sink})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -2846,7 +2850,7 @@ api_key_env = "REASONIX_TEST_KEY_UNSET"
 	approveWorkspace(t, dir)
 	writeFile(t, dir, ".reasonix/skills/projskill.md", "---\ndescription: a project skill\n---\nplaybook")
 
-	ctrl, err := Build(context.Background(), Options{})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -2899,7 +2903,7 @@ api_key_env = "REASONIX_TEST_KEY_UNSET"
 `, excluded))
 	approveWorkspace(t, dir)
 
-	ctrl, err := Build(context.Background(), Options{})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -2944,7 +2948,7 @@ api_key_env = "REASONIX_TEST_KEY_UNSET"
 `)
 	approveWorkspace(t, dir)
 
-	ctrl, err := Build(context.Background(), Options{})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -2989,7 +2993,7 @@ api_key_env = "REASONIX_TEST_KEY_UNSET"
 `)
 	approveWorkspace(t, dir)
 
-	ctrl, err := Build(context.Background(), Options{})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -3019,7 +3023,7 @@ api_key_env = "REASONIX_TEST_KEY_UNSET"
 `)
 	approveWorkspace(t, dir)
 
-	ctrl, err := Build(context.Background(), Options{})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -3552,7 +3556,7 @@ func TestBuildMigratesLegacyConfigEndToEnd(t *testing.T) {
 		}
 	})
 
-	ctrl, err := Build(context.Background(), Options{Sink: sink})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: proj, Sink: sink})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -3985,7 +3989,7 @@ tier = "eager"
 
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
-	ctrl, err := Build(ctx, Options{})
+	ctrl, err := Build(ctx, Options{WorkspaceRoot: dir})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -4033,7 +4037,7 @@ tier = "lazy"
 
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
-	ctrl, err := Build(ctx, Options{})
+	ctrl, err := Build(ctx, Options{WorkspaceRoot: dir})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -4246,8 +4250,9 @@ model = "x"
 		return encoded
 	}
 
-	baseline := captureSchemas(Options{})
+	baseline := captureSchemas(Options{WorkspaceRoot: root})
 	withOverrides := captureSchemas(Options{
+		WorkspaceRoot:   root,
 		AdditionalDirs:  []string{extra},
 		PermissionAllow: []string{"Bash(git *)", "Edit"},
 	})
@@ -4261,7 +4266,7 @@ model = "x"
 		testutil.Turn{Text: "done"},
 	)
 	setBootTokenProfileTestProvider(t, prov)
-	ctrl, err := Build(context.Background(), Options{Sink: event.Discard, AdditionalDirs: []string{extra}})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: root, Sink: event.Discard, AdditionalDirs: []string{extra}})
 	if err != nil {
 		t.Fatalf("Build writer: %v", err)
 	}
@@ -4308,7 +4313,7 @@ model = "x"
 		testutil.Turn{Text: "done"},
 	)
 	setBootTokenProfileTestProvider(t, prov)
-	ctrl, err := Build(context.Background(), Options{
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: root,
 		Sink:                 event.Discard,
 		AdditionalDirs:       []string{extra},
 		HeadlessApprovalMode: control.ToolApprovalYolo,
@@ -4498,7 +4503,7 @@ func TestBuildKeepsSourceConnectorAndSkillToolsDespiteSafeModeEnv(t *testing.T) 
 	t.Chdir(dir)
 	t.Setenv("REASONIX_SAFE_MODE", "1")
 
-	ctrl, err := Build(context.Background(), Options{
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir,
 		SessionDir: filepath.Join(robustTempDir(t), "sessions"),
 		TokenMode:  TokenModeFull,
 		Sink:       event.Discard,

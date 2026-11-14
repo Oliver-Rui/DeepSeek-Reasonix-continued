@@ -98,7 +98,7 @@ func TestEffectBashAskRuleHoldsThroughWrappers(t *testing.T) {
 				mu.Unlock()
 				go ref.Load().Approve(e.Approval.ID, false, false, false)
 			})
-			ctrl, err := Build(context.Background(), Options{Sink: sink})
+			ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: sink})
 			if err != nil {
 				t.Fatalf("Build: %v", err)
 			}

@@ -50,7 +50,7 @@ func TestEffectInstalledStandaloneMCPJSONToolCanBeCalled(t *testing.T) {
 		t.Fatalf("installation = %s", out)
 	}
 
-	ctrl, err := Build(t.Context(), Options{Sink: event.Discard})
+	ctrl, err := Build(t.Context(), Options{WorkspaceRoot: workspace, Sink: event.Discard})
 	if err != nil {
 		t.Fatalf("Build installed MCP: %v", err)
 	}
@@ -77,7 +77,7 @@ func TestEffectInstalledStandaloneMCPJSONToolCanBeCalled(t *testing.T) {
 	}
 	ctrl.Close()
 
-	restarted, err := Build(t.Context(), Options{Sink: event.Discard})
+	restarted, err := Build(t.Context(), Options{WorkspaceRoot: workspace, Sink: event.Discard})
 	if err != nil {
 		t.Fatalf("Build after removal: %v", err)
 	}
@@ -103,7 +103,7 @@ func TestEffectRemoveMCPAfterSourceDirectoryDeleted(t *testing.T) {
 	if err := config.DefaultActivationStore().SetServerEnabled(cfg.Plugins[0], workspace, config.ActivationProject, true); err != nil {
 		t.Fatal(err)
 	}
-	ctrl, err := Build(t.Context(), Options{Sink: event.Discard})
+	ctrl, err := Build(t.Context(), Options{WorkspaceRoot: workspace, Sink: event.Discard})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -135,7 +135,7 @@ func TestEffectRemoveMCPAfterSourceDirectoryDeleted(t *testing.T) {
 		t.Fatalf("removed stale MCP still has a status row: %+v", health)
 	}
 	ctrl.Close()
-	restarted, err := Build(t.Context(), Options{Sink: event.Discard})
+	restarted, err := Build(t.Context(), Options{WorkspaceRoot: workspace, Sink: event.Discard})
 	if err != nil {
 		t.Fatal(err)
 	}

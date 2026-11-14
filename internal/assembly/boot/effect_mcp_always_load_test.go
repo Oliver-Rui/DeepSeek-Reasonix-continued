@@ -70,7 +70,7 @@ func TestEffectAlwaysLoadedMCPToolsReachTheProviderSchema(t *testing.T) {
 		// The first session has no cached schema: nothing to show yet, so the
 		// server stays deferred while boot discovers and caches its tools.
 		rec = &capabilityCallProvider{}
-		ctrl, err := Build(context.Background(), Options{Sink: event.Discard})
+		ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard})
 		if err != nil {
 			t.Fatalf("Build: %v", err)
 		}
@@ -87,7 +87,7 @@ func TestEffectAlwaysLoadedMCPToolsReachTheProviderSchema(t *testing.T) {
 		if !alwaysLoad {
 			rec.direct = ""
 		}
-		ctrl, err = Build(context.Background(), Options{Sink: event.Discard})
+		ctrl, err = Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard})
 		if err != nil {
 			t.Fatalf("Build: %v", err)
 		}

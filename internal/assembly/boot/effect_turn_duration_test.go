@@ -33,7 +33,7 @@ model = "x"
 `)
 	approveWorkspace(t, dir)
 	ended := make(chan event.Event, 4)
-	ctrl, err := Build(context.Background(), Options{Sink: event.FuncSink(func(e event.Event) {
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.FuncSink(func(e event.Event) {
 		if e.Kind == event.TurnDone {
 			ended <- e
 		}

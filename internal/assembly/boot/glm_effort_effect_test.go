@@ -67,7 +67,7 @@ func glmTurn(t *testing.T, model, stored string) map[string]any {
 	writeFile(t, dir, "reasonix.toml", fmt.Sprintf(glmDepthTOML, model, srv.URL, model, stored))
 	approveWorkspace(t, dir)
 
-	ctrl, err := Build(context.Background(), Options{Sink: event.Discard})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}

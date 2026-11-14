@@ -73,7 +73,7 @@ model = "x"
 						{"slash_command", `{"command":"command-notes-kit:note","arguments":"ISSUE-7 verified change"}`},
 						{"slash_command", `{"command":"note","arguments":"PROJECT-CHECK"}`},
 					}}
-					ctrl, err := Build(t.Context(), Options{Sink: event.Discard})
+					ctrl, err := Build(t.Context(), Options{WorkspaceRoot: workspace, Sink: event.Discard})
 					if err != nil {
 						t.Fatal(err)
 					}

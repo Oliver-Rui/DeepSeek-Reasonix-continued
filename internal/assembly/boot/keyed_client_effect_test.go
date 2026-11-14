@@ -83,7 +83,7 @@ api_key_env = "KEYED_EFFECT_KEY"
 		t.Fatal(err)
 	}
 	approveWorkspace(t, dir)
-	ctrl, err := Build(context.Background(), Options{Sink: event.Discard})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}

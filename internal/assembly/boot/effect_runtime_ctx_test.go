@@ -48,7 +48,7 @@ url = "`+server.URL+`"
 	approveWorkspace(t, dir)
 	// The first runtime finds no cached schema and starts the server while it
 	// builds; the one after it, like a second pane, starts it on first call.
-	first, err := Build(context.Background(), Options{Sink: event.Discard})
+	first, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}
@@ -57,7 +57,7 @@ url = "`+server.URL+`"
 	}
 	first.Close()
 	request, requestDone := context.WithCancel(context.Background())
-	ctrl, err := Build(request, Options{Sink: event.Discard})
+	ctrl, err := Build(request, Options{WorkspaceRoot: dir, Sink: event.Discard})
 	requestDone()
 	if err != nil {
 		t.Fatalf("Build: %v", err)

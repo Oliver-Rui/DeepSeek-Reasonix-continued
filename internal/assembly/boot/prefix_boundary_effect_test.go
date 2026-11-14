@@ -46,7 +46,7 @@ model = "x"
 
 	// The fact has to be saved by a session that then ends: a store written
 	// mid-session is what the next session would have folded in.
-	first, err := Build(context.Background(), Options{Sink: event.Discard})
+	first, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard})
 	if err != nil {
 		t.Fatalf("first Build: %v", err)
 	}
@@ -59,7 +59,7 @@ model = "x"
 	}
 	first.Close()
 
-	ctrl, err := Build(context.Background(), Options{Sink: event.Discard})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard})
 	if err != nil {
 		t.Fatalf("second Build: %v", err)
 	}

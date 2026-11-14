@@ -79,6 +79,7 @@ kind = "boot-writing"
 model = "x"
 `)
 	approveWorkspace(t, dir)
+	opts.WorkspaceRoot = dir
 	ctrl, err := Build(context.Background(), opts)
 	if err != nil {
 		t.Fatalf("Build: %v", err)

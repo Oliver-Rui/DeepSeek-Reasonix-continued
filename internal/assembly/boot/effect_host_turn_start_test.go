@@ -41,7 +41,7 @@ func TestEffectAHostQueuedTurnAnnouncesItsStartBeforeItsOutput(t *testing.T) {
 			once.Do(func() { close(done) })
 		}
 	})
-	ctrl, err := Build(context.Background(), Options{Sink: sink})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: sink})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}

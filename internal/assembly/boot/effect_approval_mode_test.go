@@ -26,7 +26,8 @@ func TestEffectUnrecognizedApprovalModeOpensInAskWithANotice(t *testing.T) {
 	} {
 		t.Run(tc.mode, func(t *testing.T) {
 			isolateConfigHome(t)
-			t.Chdir(robustTempDir(t))
+			dir := robustTempDir(t)
+			t.Chdir(dir)
 			writeUserConfig(t, userModel+"\n[desktop]\ndefault_tool_approval_mode = \""+tc.mode+"\"\n")
 			registerBootTokenProfileTestProvider()
 			setBootTokenProfileTestProvider(t, testutil.NewMock("posture"))
@@ -36,7 +37,7 @@ func TestEffectUnrecognizedApprovalModeOpensInAskWithANotice(t *testing.T) {
 					notices = append(notices, e)
 				}
 			})
-			ctrl, err := Build(context.Background(), Options{Sink: sink, StatsSource: surface.Desktop})
+			ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: sink, StatsSource: surface.Desktop})
 			if err != nil {
 				t.Fatalf("Build: %v", err)
 			}

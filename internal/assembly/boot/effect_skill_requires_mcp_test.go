@@ -56,7 +56,7 @@ load = "deferred"
 		}
 		rec = &scriptedCallProvider{}
 		var err error
-		ctrl, err = Build(t.Context(), Options{Sink: event.Discard})
+		ctrl, err = Build(t.Context(), Options{WorkspaceRoot: workspace, Sink: event.Discard})
 		if err != nil {
 			t.Fatal(err)
 		}

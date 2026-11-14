@@ -35,8 +35,7 @@ model = "x"
 `)
 	approveWorkspace(t, dir)
 	h := &projectionHarness{t: t, dir: dir, kind: kind, rec: rec, events: &projectionEventLog{}}
-	ctrl, err := Build(context.Background(), Options{
-		Sink: h.events, Home: os.Getenv("REASONIX_HOME"), WorkspaceRoot: dir,
+	ctrl, err := Build(context.Background(), Options{Sink: h.events, Home: os.Getenv("REASONIX_HOME"), WorkspaceRoot: dir,
 		SessionDir: filepath.Join(dir, "sessions"), resolvedShell: pinnedEffectShell(), clock: h.clock,
 	})
 	if err != nil {

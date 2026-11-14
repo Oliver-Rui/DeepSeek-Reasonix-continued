@@ -73,7 +73,11 @@ api_key_env = "REASONIX_TEST_KEY_UNSET"
 // its controller for cleanup.
 func buildRuntimeFixture(t *testing.T) *BuildResult {
 	t.Helper()
-	res, err := BuildRuntime(context.Background(), Options{})
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, err := BuildRuntime(context.Background(), Options{WorkspaceRoot: wd})
 	if err != nil {
 		t.Fatalf("BuildRuntime: %v", err)
 	}
@@ -184,7 +188,7 @@ func TestRebuildMigratesSessionState(t *testing.T) {
 	})
 	oldHistory := oldCtrl.History()
 
-	res, err := Rebuild(context.Background(), oldCtrl, Options{})
+	res, err := Rebuild(context.Background(), oldCtrl, Options{WorkspaceRoot: fixtureRoot(t)})
 	if err != nil {
 		t.Fatalf("Rebuild: %v", err)
 	}
@@ -254,7 +258,7 @@ func TestRebuildCarriesGoalWithoutSessionPath(t *testing.T) {
 	}
 	oldCtrl.SetGoal("ship the kernel")
 
-	res, err := Rebuild(context.Background(), oldCtrl, Options{})
+	res, err := Rebuild(context.Background(), oldCtrl, Options{WorkspaceRoot: fixtureRoot(t)})
 	if err != nil {
 		t.Fatalf("Rebuild: %v", err)
 	}
@@ -282,7 +286,7 @@ func TestRebuildFailureKeepsOldController(t *testing.T) {
 		{Role: provider.RoleUser, Content: "hello"},
 	}, prevPath)
 
-	res, err := Rebuild(context.Background(), oldCtrl, Options{Model: "definitely-unknown-model"})
+	res, err := Rebuild(context.Background(), oldCtrl, Options{WorkspaceRoot: fixtureRoot(t), Model: "definitely-unknown-model"})
 	if err == nil {
 		t.Fatal("Rebuild succeeded, want ErrUnknownModel")
 	}

@@ -78,7 +78,10 @@ api_key_env = "REASONIX_TEST_KEY_UNSET"
 `)
 	approveWorkspace(t, dir)
 
-	ctrl, err := Build(context.Background(), Options{})
+	// State the workspace root explicitly: the cwd fallback walks up for .git,
+	// so a stray repository above the temp dir (e.g. a dotfiles home) would win
+	// and silently swap the fixture config out of the capture.
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}

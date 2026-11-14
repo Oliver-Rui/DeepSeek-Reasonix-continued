@@ -98,7 +98,7 @@ model = "x"
 			mu.Unlock()
 		}
 	})
-	ctrl, err := Build(context.Background(), Options{Sink: sink, HeadlessApprovalMode: control.ToolApprovalAsk})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: sink, HeadlessApprovalMode: control.ToolApprovalAsk})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}

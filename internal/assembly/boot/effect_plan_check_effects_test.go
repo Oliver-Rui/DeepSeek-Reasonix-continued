@@ -119,7 +119,7 @@ kind = "`+kind+`"
 model = "planner-model"
 `)
 	approveWorkspace(t, dir)
-	ctrl, err := Build(context.Background(), Options{Sink: event.Discard, SessionDir: filepath.Join(dir, "sessions")})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard, SessionDir: filepath.Join(dir, "sessions")})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}

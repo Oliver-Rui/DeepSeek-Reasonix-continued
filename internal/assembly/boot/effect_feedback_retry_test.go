@@ -56,7 +56,7 @@ model = "x"
 	defer svc.Close()
 	t.Setenv("REASONIX_FEEDBACK_URL", svc.URL)
 
-	ctrl, err := Build(context.Background(), Options{FeedbackSurface: feedback.SurfaceTUI})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, FeedbackSurface: feedback.SurfaceTUI})
 	if err != nil {
 		t.Fatal(err)
 	}

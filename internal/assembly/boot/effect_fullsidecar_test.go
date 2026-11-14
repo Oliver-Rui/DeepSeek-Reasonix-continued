@@ -139,7 +139,7 @@ model = "x"
 		t.Helper()
 		sink := &uiSinkRecorder{}
 		asks := make(chan event.Ask, 1)
-		res, err := BuildRuntime(t.Context(), Options{Sink: event.FuncSink(func(ev event.Event) {
+		res, err := BuildRuntime(t.Context(), Options{WorkspaceRoot: workspace, Sink: event.FuncSink(func(ev event.Event) {
 			sink.emit(ev)
 			if ev.Kind == event.AskRequest {
 				asks <- ev.Ask

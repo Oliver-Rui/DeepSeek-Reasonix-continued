@@ -68,7 +68,7 @@ kind = "commit-draft-fails"
 model = "x"
 `)
 	approveWorkspace(t, dir)
-	ctrl, err := Build(context.Background(), Options{})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}

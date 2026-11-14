@@ -28,7 +28,7 @@ func slowShellBuild(t *testing.T, kind string, tune func(*sandbox.ShellDiscovery
 	writeFile(t, dir, "reasonix.toml", "default_model = \"t\"\n[[providers]]\nname = \"t\"\nkind = \""+kind+"\"\nmodel = \"x\"\n")
 	approveWorkspace(t, dir)
 	begin := time.Now()
-	ctrl, err := Build(context.Background(), Options{Sink: event.Discard, tuneShell: tune, OnPhase: func(p Phase) { phases = append(phases, p.Name) }})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard, tuneShell: tune, OnPhase: func(p Phase) { phases = append(phases, p.Name) }})
 	if err != nil {
 		t.Fatalf("Build: %v", err)
 	}

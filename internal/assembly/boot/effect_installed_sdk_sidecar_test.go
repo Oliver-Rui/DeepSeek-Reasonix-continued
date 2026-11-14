@@ -141,7 +141,7 @@ model = "x"
 	var prefix string
 	runPhase := func(t *testing.T, enabled bool) {
 		t.Helper()
-		res, err := BuildRuntime(t.Context(), Options{Sink: event.Discard})
+		res, err := BuildRuntime(t.Context(), Options{WorkspaceRoot: workspace, Sink: event.Discard})
 		if err != nil {
 			t.Fatal(err)
 		}

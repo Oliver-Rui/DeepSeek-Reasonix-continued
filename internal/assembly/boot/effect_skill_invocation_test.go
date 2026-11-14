@@ -72,7 +72,7 @@ model = "x"
 			writeFile(t, dir, ".reasonix/skills/probe/SKILL.md", "---\ndescription: probe skill\ntriggers: probe, tidy\nauto-use: require\n---\nPROBE BODY\nthen run /other")
 			writeFile(t, dir, ".reasonix/skills/other/SKILL.md", "---\ndescription: other skill\ntriggers: other\nauto-use: require\n---\nOTHER BODY\nthen run /third")
 			writeFile(t, dir, ".reasonix/skills/third/SKILL.md", "---\ndescription: third skill\ntriggers: third\nauto-use: require\n---\nTHIRD BODY")
-			ctrl, err := Build(context.Background(), Options{Sink: event.Discard})
+			ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard})
 			if err != nil {
 				t.Fatalf("Build: %v", err)
 			}

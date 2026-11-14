@@ -37,7 +37,7 @@ model = "x"
 		// an empty selection; the surface under test is the agent's request.
 		prov := testutil.NewMock("ucap-"+mode, testutil.Turn{Text: "[]"}, testutil.Turn{Text: "done"})
 		setBootTokenProfileTestProvider(t, prov)
-		ctrl, err := Build(context.Background(), Options{Sink: event.Discard, TokenMode: mode, AgentPreset: mode})
+		ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard, TokenMode: mode, AgentPreset: mode})
 		if err != nil {
 			t.Fatalf("Build(%q): %v", mode, err)
 		}
@@ -106,7 +106,7 @@ model = "x"
 		testutil.Turn{Text: "found"},
 	)
 	setBootTokenProfileTestProvider(t, prov)
-	ctrl, err := Build(context.Background(), Options{Sink: event.Discard})
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir, Sink: event.Discard})
 	if err != nil {
 		t.Fatal(err)
 	}

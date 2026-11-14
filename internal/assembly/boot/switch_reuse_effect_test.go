@@ -40,13 +40,13 @@ model = "y"
 	approveWorkspace(t, dir)
 
 	ctx := context.Background()
-	serving, err := BuildRuntime(ctx, Options{Sink: event.Discard})
+	serving, err := BuildRuntime(ctx, Options{WorkspaceRoot: dir, Sink: event.Discard})
 	if err != nil {
 		t.Fatalf("BuildRuntime: %v", err)
 	}
 	defer serving.Controller.Close()
 
-	cold, err := BuildRuntime(ctx, Options{Model: "model-b/y", Sink: event.Discard})
+	cold, err := BuildRuntime(ctx, Options{WorkspaceRoot: dir, Model: "model-b/y", Sink: event.Discard})
 	if err != nil {
 		t.Fatalf("cold BuildRuntime: %v", err)
 	}
@@ -56,7 +56,7 @@ model = "y"
 	}
 
 	// Exactly what serve hands back for a switch (see reuseFromLastBuild).
-	opts := Options{Model: "model-b/y", Sink: event.Discard}
+	opts := Options{Model: "model-b/y", Sink: event.Discard, WorkspaceRoot: dir}
 	opts.RuntimeReload = RuntimeReload{
 		ForceFullRebuild:   true,
 		Extensions:         serving.Extensions,

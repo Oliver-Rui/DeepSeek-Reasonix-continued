@@ -27,7 +27,7 @@ func TestEffectFailedSwitchRestoresSidecars(t *testing.T) {
 			writePluginDefaultFixture(t, workspace, "plugin/stable/fake/x")
 			home := config.ReasonixHomeDir()
 			installProviderFake(t, home, "stable", nil)
-			serving, err := BuildRuntime(t.Context(), Options{Sink: event.Discard})
+			serving, err := BuildRuntime(t.Context(), Options{WorkspaceRoot: workspace, Sink: event.Discard})
 			if err != nil {
 				t.Fatal(err)
 			}

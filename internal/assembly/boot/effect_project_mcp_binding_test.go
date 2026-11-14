@@ -112,7 +112,11 @@ func waitForPhase(logPath, phase string, within time.Duration) bool {
 func buildForBinding(t *testing.T) func() {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-	ctrl, err := Build(ctx, Options{Sink: event.Discard})
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctrl, err := Build(ctx, Options{WorkspaceRoot: wd, Sink: event.Discard})
 	if err != nil {
 		cancel()
 		t.Fatalf("Build: %v", err)
@@ -142,7 +146,7 @@ func TestEffectEnabledProjectMCPDoesNotLaunchARewrittenDeclaration(t *testing.T)
 			closeFirst()
 
 			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-			ctrl, err := Build(ctx, Options{Sink: event.Discard})
+			ctrl, err := Build(ctx, Options{WorkspaceRoot: dir, Sink: event.Discard})
 			if err != nil {
 				cancel()
 				t.Fatalf("Build: %v", err)
@@ -179,7 +183,7 @@ func TestEffectEnabledProjectMCPDoesNotLaunchARewrittenDeclaration(t *testing.T)
 
 			ctx, cancel = context.WithTimeout(context.Background(), 20*time.Second)
 			defer cancel()
-			ctrl, err = Build(ctx, Options{Sink: event.Discard})
+			ctrl, err = Build(ctx, Options{WorkspaceRoot: dir, Sink: event.Discard})
 			if err != nil {
 				t.Fatalf("Build: %v", err)
 			}

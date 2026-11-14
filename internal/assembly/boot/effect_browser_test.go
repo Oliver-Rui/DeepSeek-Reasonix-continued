@@ -86,7 +86,7 @@ kind = "`+kind+`"
 model = "x"
 `)
 	approveWorkspace(t, dir)
-	opts := Options{Sink: event.Discard}
+	opts := Options{Sink: event.Discard, WorkspaceRoot: dir}
 	if len(options) > 0 {
 		opts.ComputerDriver = options[0].ComputerDriver
 	}

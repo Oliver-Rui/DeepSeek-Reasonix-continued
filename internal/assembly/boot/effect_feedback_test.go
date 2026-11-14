@@ -61,7 +61,7 @@ model = "x"
 
 	var notices []string
 	var nmu sync.Mutex
-	ctrl, err := Build(context.Background(), Options{
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir,
 		FeedbackSurface: feedback.SurfaceTUI,
 		Sink: event.FuncSink(func(e event.Event) {
 			if e.Kind == event.Notice {
@@ -187,7 +187,7 @@ model = "x"
 
 	var notices []string
 	var nmu sync.Mutex
-	ctrl, err := Build(context.Background(), Options{
+	ctrl, err := Build(context.Background(), Options{WorkspaceRoot: dir,
 		FeedbackSurface: feedback.SurfaceTUI,
 		Sink: event.FuncSink(func(e event.Event) {
 			if e.Kind == event.Notice {
