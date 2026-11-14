@@ -28,14 +28,14 @@ export function pickVisible(current: Set<string> | null, rows: TreeSession[]): S
 }
 
 /** Splits the tree into the two runs the sidebar draws, each keeping the order
- *  it was given: chosen folders are 项目, and every folder the window itself
- *  opened in — the kernel marks only chosen folders `remembered` — is 任务.
- *  More than one such folder can be listed when a pane drives an unremembered
- *  root, so the task group is a list, never a single row. */
+ *  it was given: folders a person works in are 项目, and the app's own folder —
+ *  the kernel marks it auto — is 任务, where a conversation with no project
+ *  lands. Every other folder shows as a project row, remembered or not, so a
+ *  pane's open workspace is never missing from the tree. */
 export function workspaceGroups(tree: TreeWorkspace[]): WorkspaceGroups {
   return {
-    projects: tree.filter((ws) => !!ws.remembered),
-    tasks: tree.filter((ws) => !ws.remembered),
+    projects: tree.filter((ws) => !ws.auto),
+    tasks: tree.filter((ws) => !!ws.auto),
   };
 }
 

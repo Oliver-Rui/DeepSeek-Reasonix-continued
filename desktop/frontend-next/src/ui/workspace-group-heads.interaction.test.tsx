@@ -15,7 +15,7 @@ function draw() {
   const tree: TreeWorkspace[] = [
     { root: "/a", name: "a", remembered: true, sessions: [{ path: "/a/1.jsonl", name: "one", title: "one" }] },
     { root: "/b", name: "b", remembered: true, sessions: [{ path: "/b/2.jsonl", name: "two", title: "two" }] },
-    { root: "/auto", name: "auto", remembered: false, sessions: [{ path: "/auto/3.jsonl", name: "three", title: "three" }] },
+    { root: "/auto", name: "auto", remembered: false, auto: true, sessions: [{ path: "/auto/3.jsonl", name: "three", title: "three" }] },
   ];
   const Harness = () => {
     const [folded, setFolded] = useState(new Set<string>());
@@ -65,10 +65,15 @@ it("folds the task group from the 任务 head and leaves the projects alone", as
   await userEvent.click(tasks);
   expect(screen.queryByRole("treeitem", { name: "three" })).toBeNull();
   expect(screen.getByRole("treeitem", { name: "one" })).toBeTruthy();
-  expect(row("auto").getAttribute("aria-expanded")).toBe("false");
   expect(tasks.getAttribute("aria-expanded")).toBe("false");
   expect(tasks.getAttribute("aria-label")).toBe("展开所有任务");
   await userEvent.click(tasks);
+  expect(screen.getByRole("treeitem", { name: "three" })).toBeTruthy();
+});
+
+it("hangs task conversations directly under the 任务 head with no folder row", () => {
+  draw();
+  expect([...document.querySelectorAll(".wsrow")].some((el) => el.querySelector(".wsname")?.textContent === "auto")).toBe(false);
   expect(screen.getByRole("treeitem", { name: "three" })).toBeTruthy();
 });
 

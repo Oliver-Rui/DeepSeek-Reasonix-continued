@@ -381,7 +381,9 @@ function WorkspacesView({ hub, tree, treeRead, answered = null, runtimes, active
                   onToggle={onFoldGroup && (() => onFoldGroup(projectsFold.roots, !projectsFold.folded))} />}
                 {at === groups.projects.length && <WorkspaceGroupHead group="tasks" folded={tasksFold.folded} canFold={tasksFold.canFold} searching={searching}
                   onToggle={onFoldGroup && (() => onFoldGroup(tasksFold.roots, !tasksFold.folded))} />}
-                {confirm === ws.root ? (
+                {/* The 任务 area has no folder row of its own: the head is the label,
+                    and its conversations hang directly beneath it. */}
+                {!ws.auto && (confirm === ws.root ? (
                   <Confirm
                     what={gone === ws.root ? t("session.folder_gone_remove_from_list", { name: ws.name }) : t("session.remove_name_from_the_list", { name: ws.name })}
                     hint={removeHint(doomed.length, busyPanes)}
@@ -511,7 +513,7 @@ function WorkspacesView({ hub, tree, treeRead, answered = null, runtimes, active
                       document.body,
                     )}
                   </div>
-                )}
+                ))}
 
                 {/* 子项自己成一块，才能拿到那条层级引导线。缩进单独说不清楚层级：
                     两级差 18px，扫一眼只读得出“有点错位”。 */}
