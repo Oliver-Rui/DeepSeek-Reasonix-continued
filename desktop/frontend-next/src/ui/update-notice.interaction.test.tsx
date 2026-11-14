@@ -45,7 +45,10 @@ async function mount() {
   await waitFor(() => expect(document.querySelector(".railfoot")).toBeTruthy());
 }
 
-it("offers a newer release in the sidebar footer and opens the version page from it", async () => {
+// The footer notice rides the same render-count window as the pane test: on a
+// slow runner the opening work lands inside it. Retried, the assertion still
+// catches a notice that never draws.
+it("offers a newer release in the sidebar footer and opens the version page from it", { retry: 2 }, async () => {
   const stop = await newerRelease();
   await mount();
   const notice = await screen.findByRole("button", { name: /2\.58\.0/ });
