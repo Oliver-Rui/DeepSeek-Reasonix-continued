@@ -359,6 +359,29 @@ The browser walkthrough surfaced a second pass, committed locally as well:
 - `reasonix serve --workspace-switch` and the two new refusal codes above are
   part of the same round.
 
+### The FuchaZ round — thirteen commits transplanted by hand
+
+The fork FuchaZ/DeepSeek-Reasonix:studio carries twenty-two commits of its own on
+top of upstream and our cherry-picks. Thirteen were transplanted and adapted to this
+tree — cherry-pick would have fought the pill, the task groups and the settings
+rework, so each diff was applied and its conflicts resolved by hand:
+
+- The right console's launcher and the memory body drop their width caps; the dock
+  and nav slides ease gently; a live thought uses the whole window and the thought
+  text carries its own weight token (`--w-think`); the narrow rail's deck chip
+  yields; Patina's overlay gained its own step.
+- The 扩展范围 pill portals its project list to the body — the settings scroll box
+  clipped it; the scope menu opens at the click toward the bottom-right, sized to
+  its longest row, its arrow riding the 最近 label (the count column is numbers
+  only); the write-lease search result moved to the session page that hosts it.
+- Kernel: the first turn asks the title model while it runs and the sidebar reads a
+  real name (`titleauto.go`, gated on `agent.title_model` — the review round set it
+  to the chat model); the meter rail's 对话轮次 counts authored turns, re-derived
+  from the transcript; a loopback listener carries the provider grant.
+- Skipped on purpose: the settings placement refactor (`be9120fb`, fights the
+  会话互聊 rework — its own pass later), the notes-draft scripts, and the cherry-
+  picked entries that were already ours.
+
 ### Open for the next session
 
 - These commits are local only — push through the Git Data API pipeline
