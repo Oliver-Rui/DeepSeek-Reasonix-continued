@@ -211,10 +211,14 @@ installer's own 32-bit `resources/elevate.exe`.
 - Only Windows was built here. `.deb`, `.rpm`, `.AppImage` and the macOS bundle still rely on
   `release-studio.yml` and its credentials.
 
-## 6. Revision 2.63.0
+## 6. Revision 2.63.0, folded into the 2.62.0 release
 
-The second release of this line. Four commits, all frontend (`desktop/frontend-next`), pushed to
-`studio` on `Oliver-Rui/DeepSeek-Reasonix-continued` — the remote was retargeted this revision; the
+The work of this revision plus everything below shipped as the fork's **first** release,
+`studio-v2.62.0` — an earlier `studio-v2.63.0` release was published, deleted the same day, and
+its content folded forward; the version number was not reused.
+
+Four commits first, all frontend (`desktop/frontend-next`), pushed to `studio` on
+`Oliver-Rui/DeepSeek-Reasonix-continued` — the remote was retargeted this revision; the
 `Reasonix-Studio-Tweaks` URL in older notes never existed on GitHub.
 
 | Commit | Change |
@@ -225,7 +229,17 @@ The second release of this line. Four commits, all frontend (`desktop/frontend-n
 | `17154c7` | `data.cloud_backup` — a key nothing had referenced since the feature left in 2.62.0's work. |
 
 The README open item from §5 is closed: both READMEs now tell the 2.61.0 handover, the
-`studio` line (2.62.0, 2.63.0, …), and point at this repository's releases page.
+`studio` line's first release 2.62.0, and point at this repository's releases page.
+
+The four commits above were followed by five more before the release was cut:
+
+| Commit | Change |
+| --- | --- |
+| `c6a50b4` | 会话互聊 kernel: `peers.cross_project` (always / paired / never, default always) gates dispatches into another project, and a dispatch with a role writes the role as the target's explicit title. `PeerThread` carries the role (book join by peer key). |
+| `90fe800` | Settings gains a top-level 会话互聊 section — the folded `peers` section promoted, the three groups gathered, the two dispatch ceilings exposed, a 跨项目派发 seg, and the （实验） qualifier dropped. |
+| `40335ab` | The dispatching pane grows a 会话互聊 bar — one row per outbound thread, live states, open affordance; the folded dispatch row shows 派发任务 · project · role. |
+| `92d7453` | The sidebar's group heads become controls — 项目 ⌄ / 任务 ⌄ fold their own group, the folder/tasks icons and the toolbar's separate fold-all retire, project rows lose the folder icon. |
+| `72886a4` | The READMEs' intro says what the branch changes now (three sections, removals stay in the release notes); `.gitignore` keeps ZCode's session plans out of repolint's full run. |
 
 ### Checks run for this revision
 
@@ -238,3 +252,88 @@ The README open item from §5 is closed: both READMEs now tell the 2.61.0 handov
 | `vite build` | clean |
 | The running app at 100% and 115% zoom | the picker, both groups, the pill, the dropdown rows and the windowbar verified; the windowbar's buttons also by computed `webkitAppRegion` with the platform attribute stubbed (the plain browser does not render them) |
 
+### Released as studio-v2.62.0
+
+- Release: [studio-v2.62.0](https://github.com/Oliver-Rui/DeepSeek-Reasonix-continued/releases/tag/studio-v2.62.0),
+  merged to `studio` through PR #1 (merge commit `07441dd0`)
+- An earlier [studio-v2.63.0](https://github.com/Oliver-Rui/DeepSeek-Reasonix-continued/releases/tag/studio-v2.63.0)
+  was published from that head, deleted the same day, and the whole line republished as
+  studio-v2.62.0 with the README intro and the 会话互聊 work — the version number was not reused
+  for different content.
+- Installer: `ReasonixStudio-windows-amd64-installer.exe`, unsigned — SmartScreen warns on first run
+- Published by hand through the REST API: `release-studio.yml` cannot publish
+  from a fork (minisign secrets, the `studio-release` environment and a prior
+  tag are all absent)
+- `git push` was unreachable from this machine; every commit, the merge and
+  the release were built server-side through the Git Data API, and the
+  API-rebuilt history is byte-exact — every tree and commit sha equals the
+  local one
+
+Two CI facts this revision leaves behind:
+
+- The macOS legs of both workflows are pinned to `macos-15` after
+  `macos-latest`'s arm64 pool refused to seat jobs for four runs in a row
+  ("not acquired by Runner of type hosted")
+- The five upstream `deploy-*` workflows are disabled on the fork — they
+  deploy upstream's website and workers with upstream's credentials and can
+  only fail here
+
+
+## 7. Revision in progress — the session lands, then picks its project
+
+This revision inverts the new-session flow to the reference design and finishes the sidebar's
+two groups. Nothing below is pushed yet: the local commits sit on `feat/same-project-subagent`
+waiting for the word to push, rerun CI and republish.
+
+### Kernel (`internal/frontend/serve`, `internal/frontend/cli`)
+
+- `Hub.resolveRoot` — a brand-new conversation (no root, no session path) no longer joins the
+  first live runtime's folder: it opens in the app's own workspace (`ensureAutoWorkspace`).
+  Restores and dispatches keep their explicit roots.
+- `POST /workspace` accepts `{auto: true}` — the pill's 不使用项目 answer; the pane joins the
+  same auto workspace. Deliberately unchanged: the switch carries no conversation continuity.
+- `GET /tree` marks the auto workspace `auto: true` and keeps it listed with no pane on it
+  (`roots()` stats the folder), so the 任务 group is a standing section, not a pane byproduct.
+- `POST /tree/workspaces` accepts `name` — a blank project is an empty, chosen folder created
+  inside the folder the picker returned, then remembered. Two new refusal codes
+  (`workspace.name_taken`, `workspace.bad_name`) with frontend wording.
+- `reasonix serve --workspace-switch` grants `POST /workspace` to a plain serve; the desktop
+  window grants itself the same thing, so the browser UI can switch projects too.
+
+### Frontend (`desktop/frontend-next`)
+
+- The composer's project pill (`WorkspacePill.tsx`) — the ZCode-shaped palette: 搜索项目 search,
+  project rows with the current marker, 添加新项目 submenu, 不使用项目.
+- 新建空白项目 is a dialog (项目名称 + 源文件夹); 使用现有文件夹 keeps the picker.
+- The pill sits above the composer card on its left edge: a task pane shows 进入项目工作, a
+  project pane the project's name, and after 不使用项目 is confirmed the pill goes away until
+  the pane works in a project again.
+- Blank-project creation falls back to a typed path when no picker answers (`addws.ts` gained
+  `pickFolder` and `addNamed`).
+- The sidebar splits by the kernel's mark now: `workspaceGroups` puts `auto` workspaces in
+  任务 and everything else in 项目; the auto node renders no folder row — its conversations
+  hang directly under the 任务 head. Unremembered folders a pane drives show under 项目.
+- The 先打开一个项目 hero is gone: which project a conversation belongs to is the pill's
+  question, so the empty pane just introduces itself (`Hero.tsx`), and `needsProject`,
+  `onKeepHere` and the `claimed` flag left the codebase.
+- 新建会话 opens the pane directly (no picker modal); the picker's row data lives on as
+  `pickerProjects` for the pill's palette.
+
+### Checks run for this revision
+
+| Check | Result |
+| --- | --- |
+| `tsc --noEmit` | clean |
+| `vitest run src/ui src/i18n src/port` | pass, 809 files |
+| `go test ./internal/frontend/serve/ -timeout 30m` | one machine-only failure (`TestSkillCatalogProjectsAuthorInvocationFlags/other_project`, the known repo-key-collision family, green on CI); the refusal-parity test passes after the two new codes were worded |
+| `npm run census` + `census:verify` | clean; fixture reports identical |
+| `repolint -changed` | clean after trimming the touched CSS/Go lines back under their budgets |
+| The running app in the browser | the full flow: 新建会话 → 任务 group, the pill 进入项目工作 → palette (search, Reasonix Studio 当前, 添加新项目 submenu, 不使用项目), switching into a project and back, 不使用项目 hiding the pill, and a real task conversation run |
+
+### Open for the next session
+
+- These commits are local only — push through the Git Data API pipeline
+  (`C:\Users\Oliver\AppData\Local\Temp\reasonix-api-push\`), rerun CI, then delete and
+  republish studio-v2.62.0 on the new head with the installer rebuilt.
+- The token that once appeared in chat should be rotated; it is stored in the Windows
+  credential manager and `~/.zcode/cli/config.json` only.
