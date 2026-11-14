@@ -965,11 +965,14 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  publish:
-    name: sign, publish and mirror
+  # A release this repository cannot sign does not publish — the upstream
+  # contract, kept by skipping the publish cleanly instead of failing at the
+  # Sign step after every artifact already built green. A fork without the
+  # minisign key runs the builds, keeps the artifacts downloadable, and the
+  # maintainer publishes from them; the run itself stays green.
+  publish-gate:
+    name: decide whether CI publishes this release
     needs: [resolve, build, cli, windows-sign-payload, windows-package, windows-verify-package, windows-sign-installer, windows-install-smoke]
-    # The Windows signing jobs may be skipped only while the switch is off; with
-    # it on, any of them failing, cancelled or absent blocks the release.
     if: >-
       ${{ !cancelled() && needs.resolve.result == 'success' && needs.build.result == 'success' &&
       needs.cli.result == 'success' && needs.windows-install-smoke.result == 'success' &&
@@ -979,6 +982,28 @@ jobs:
       (vars.STUDIO_SIGNING_ENABLED != 'true' && needs.windows-sign-payload.result == 'skipped' &&
       needs.windows-package.result == 'skipped' && needs.windows-verify-package.result == 'skipped' &&
       needs.windows-sign-installer.result == 'skipped')) }}
+    runs-on: ubuntu-latest
+    outputs:
+      publish: ${{ steps.decide.outputs.publish }}
+    steps:
+      - id: decide
+        env:
+          MINISIGN_PRIVATE_KEY: ${{ secrets.MINISIGN_PRIVATE_KEY }}
+        run: |
+          if [ -z "$MINISIGN_PRIVATE_KEY" ]; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::MINISIGN_PRIVATE_KEY is not set on this repository — CI does not publish a release it cannot sign. The studio-build-* artifacts stay downloadable for 7 days; publish from them by hand."
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  publish:
+    name: sign, publish and mirror
+    needs: [resolve, build, cli, windows-sign-payload, windows-package, windows-verify-package, windows-sign-installer, windows-install-smoke, publish-gate]
+    # The gate above carries the run-condition logic; the Sign step inside
+    # refuses to publish what this repository cannot sign, so this job reads
+    # only its verdict.
+    if: needs.publish-gate.outputs.publish == 'true'
     runs-on: ubuntu-latest
     # Owner approval for the whole line. The gate sits here rather than before
     # build so the approval is given with the artifacts already proven to build.

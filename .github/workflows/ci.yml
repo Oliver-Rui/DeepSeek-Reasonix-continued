@@ -1038,6 +1038,7 @@ jobs:
           version: v2.12.2
           working-directory: desktop
           args: --timeout=5m
+          skip-cache: true
 
       - name: build
         run: go build ./...
@@ -1077,6 +1078,7 @@ jobs:
           version: v2.12.2
           working-directory: desktop
           args: --timeout=5m
+          skip-cache: true
 
   # The update helper's versioned-install and uninstall paths are Windows-only
   # (//go:build windows), so the ubuntu leg above never compiles them.
@@ -1128,11 +1130,15 @@ jobs:
       - id: golangci
         run: echo "version=$(cat .golangci-version)" >> "$GITHUB_OUTPUT"
 
+      # The analysis cache keys on absolute paths, so a restored entry from
+      # before the repo was renamed reports issues for ../<old-name>/… files
+      # that do not exist. Lint takes minutes; a wrong red takes a round trip.
       - name: golangci-lint
         uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9
         with:
           version: ${{ steps.golangci.outputs.version }}
           args: --timeout=5m
+          skip-cache: true
 
       # The step above only type-checks the linux/amd64 build, so every
       # //go:build windows and //go:build darwin file in the tree went unlinted.

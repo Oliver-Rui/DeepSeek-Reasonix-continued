@@ -23,26 +23,43 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+      # The deploy is the owner's Cloudflare account, so a fork without the
+      # token skips instead of failing: the pipeline stays green until the
+      # secrets exist, and nothing about the deploy itself changed.
+      - id: gate
+        run: |
+          if [ -z "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::CLOUDFLARE_API_TOKEN is not set on this repository; the web studio deploy is skipped. Set CLOUDFLARE_API_TOKEN and R2_ACCOUNT_ID to deploy."
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.gate.outputs.run == 'true'
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
         with:
           version: 10
           run_install: false
 
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+      - if: steps.gate.outputs.run == 'true'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: "24"
           cache: pnpm
           cache-dependency-path: desktop/frontend-next/pnpm-lock.yaml
 
-      - name: Install
+      - if: steps.gate.outputs.run == 'true'
+        name: Install
         run: pnpm install --frozen-lockfile
 
-      - name: Build
+      - if: steps.gate.outputs.run == 'true'
+        name: Build
         env:
           VITE_REMOTE_HOME: https://reasonix.io/remote/
         run: pnpm build
 
-      - name: Deploy
+      - if: steps.gate.outputs.run == 'true'
+        name: Deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
