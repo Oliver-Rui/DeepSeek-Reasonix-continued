@@ -3,7 +3,12 @@
 </p>
 
 > [!NOTE]
-> A personal fork of [DeepSeek-Reasonix](https://github.com/esengine/DeepSeek-Reasonix) on the `studio` (2.x) line. Upstream stopped at v2.61.0; this fork continues from there, focused on the Reasonix Studio desktop app: UI layout, small bug fixes, and the UI groundwork for multi-agent sessions.
+> **DeepSeek-Reasonix-torch** — a personal fork of [DeepSeek-Reasonix](https://github.com/esengine/DeepSeek-Reasonix) on the `studio` (2.x) line.
+>
+> QQ group: **1821170167**
+>
+> Upstream stopped at v2.61.0; this fork continues from there: a navigation shell rebuilt as
+> one table, sessions that hand each other work, and fixes that keep landing.
 
 <p align="center">
   <strong>English</strong>
@@ -23,19 +28,32 @@
 
 ## What this fork changes
 
-The engine is kept as upstream left it. The work lands in Reasonix Studio, the desktop app:
+This fork is **DeepSeek-Reasonix-torch**. The engine is kept as upstream left it; the work lands in Reasonix Studio:
 
-- **UI layout.** The workbench, panes and prompt area are rearranged so the conversation and the project tree get more of the window and the chrome gets less.
-- **Small bug fixes.** Narrow defects in the desktop shell and the web UI, fixed one at a time, each with the test that covers it.
-- **Multi-agent UI.** The desktop UI is being built out for sessions that run more than one agent, so each agent's work stays visible and attributable.
+### A navigation shell rebuilt as one table
 
-Changes stay small and reviewable. Nothing here is a rewrite.
+- The sidebar and the icon rail draw the rows of one list, so the two can neither disagree nor offer the same entry twice.
+- 右键图标栏 opens 自定义导航栏: one panel orders the rows and hides them, dragging reorders, and the order is written on release.
+- The conversation rail is a ruler: dense right-aligned ticks, the viewport one darker tick, and pointing at a message stretches that tick into its text card.
+- The session tree reads as two named groups — 项目 over the remembered projects, 任务 over the window's own folder.
+- 最近 is an ordering in the session filter menu, not a page.
+
+### Sessions that hand each other work
+
+- A dispatch may name the session it opens, and `peers.incoming` (ask / dispatch / always) decides what another of your sessions may send without a card.
+- 新建会话 opens 选择项目 first: search, local and remote projects, 创建项目, and 不在项目中工作 — which opens the session in the kernel's own non-project folder. The 新建 on a project row bypasses the picker.
+
+### Fixes that keep landing
+
+- The settings windowbar's 最小化 / 最大化 / 关闭 stay clickable while 设置 is open.
+- The scope pill and its dropdown rows hold their layout at any zoom.
+- The files panel opens from whichever entry the layout has on a 1400px window.
 
 ## Versions
 
-This fork starts at **v2.6.1** and moves forward inside the `2.6.x` line: each release bumps the patch number — 2.6.1, 2.6.2, 2.6.3, and so on. There is no jump to 2.7; new behaviour ships as `2.6.x` patches.
+This fork continues from upstream's **v2.61.0** — the point where upstream declared maintenance stopped. Releases move along the `studio` line: **2.62.0** is the first fork release.
 
-Releases are published from this repository's own [releases page](https://github.com/Oliver-Rui/DeepSeek-Reasonix/releases). v2.61.0 remains the last upstream release.
+Releases are published from this repository's own [releases page](https://github.com/Oliver-Rui/DeepSeek-Reasonix-continued/releases). v2.61.0 remains the last upstream release.
 
 ## Install
 
@@ -44,8 +62,8 @@ Reasonix Studio is the desktop app; the CLI, Studio and the editor integrations 
 Build it from source:
 
 ```sh
-git clone https://github.com/Oliver-Rui/DeepSeek-Reasonix.git
-cd DeepSeek-Reasonix
+git clone https://github.com/Oliver-Rui/DeepSeek-Reasonix-continued.git
+cd DeepSeek-Reasonix-continued
 git switch studio
 ```
 

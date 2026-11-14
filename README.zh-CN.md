@@ -3,7 +3,9 @@
 </p>
 
 > [!NOTE]
-> 这是 [DeepSeek-Reasonix](https://github.com/esengine/DeepSeek-Reasonix) `studio`（2.x）分支的个人 fork。上游停在 v2.61.0；本仓库从这里继续，改动集中在 Reasonix Studio 桌面端：UI 布局、小缺陷修复，以及多 Agent 会话的 UI 基础。
+> **DeepSeek-Reasonix-torch** —— [DeepSeek-Reasonix](https://github.com/esengine/DeepSeek-Reasonix) `studio`（2.x）分支的个人 fork。上游停在 v2.61.0；本仓库从这里继续：重建的导航外壳、会话互相派活，以及修个不停的细节。
+>
+> QQ 交流群：**1821170167**
 
 <p align="center">
   <a href="./README.md">English</a>
@@ -23,19 +25,32 @@
 
 ## 这个分支改了什么
 
-引擎部分保持上游原样，改动落在 Reasonix Studio 桌面端：
+本 fork 名为 **DeepSeek-Reasonix-torch**。引擎部分保持上游原样，改动落在 Reasonix Studio 上：
 
-- **UI 布局**：重排工作台、面板和输入区，把窗口更多空间留给对话和项目树，少留给人来看的壳子。
-- **小缺陷修复**：桌面外壳和网页界面里那些窄范围的问题逐个修掉，每个都带上对应的测试。
-- **多 Agent UI**：为同时运行多个 Agent 的会话搭桌面端界面，让每个 Agent 的产出都看得见、认得出是谁做的。
+### 导航外壳重做成一张表
 
-改动保持小而可审阅，不是重写。
+- 侧栏和图标栏画同一张表里的行，两处不会各说各的，也不会把同一个入口画两次。
+- 右键点图标栏打开「自定义导航栏」：一个面板管顺序与显隐，拖动排序，松手落盘。
+- 右缘的对话轨是一把尺子：刻度密集、右端对齐，指到某条消息时那一条拉长，文字卡片贴在它左边。
+- 会话树分成两组：「项目」是记住的项目，「任务」是窗口自己打开的文件夹。
+- 「最近」是会话筛选菜单里的一种排序，不再是一个页面。
+
+### 会话互相派活
+
+- 派活时可以给目标会话起名字；`peers.incoming`（ask / dispatch / always）决定别的会话发来的消息要不要弹授权卡。
+- 「新建会话」先弹「选择项目」：搜索、本地与远程项目、创建项目，以及「不在项目中工作」——会话开在内核自己的非项目文件夹里。项目行上的「新建」不走弹窗。
+
+### 修个不停的细节
+
+- 打开设置后，右上角的最小化、最大化、关闭照常能按。
+- 项目药丸的下拉箭头和下拉列表在任意缩放下都守得住排版。
+- 1400px 宽的窗口里，文件面板从布局真正有的那个入口打开。
 
 ## 版本
 
-本 fork 从 **v2.6.1** 起步，在 `2.6.x` 线上一直往上走：每次发布加一位补丁号——2.6.1、2.6.2、2.6.3……不会跳到 2.7，新行为都以 `2.6.x` 补丁的形式发出。
+本 fork 从上游的 **v2.61.0** 接手——上游在这一点声明停止维护。发布沿 `studio` 线往上走：**2.62.0** 是本 fork 的第一个发布。
 
-版本发布在本仓库自己的[发布页](https://github.com/Oliver-Rui/DeepSeek-Reasonix/releases)。上游最后一个版本仍是 v2.61.0。
+版本发布在本仓库自己的[发布页](https://github.com/Oliver-Rui/DeepSeek-Reasonix-continued/releases)。上游最后一个版本仍是 v2.61.0。
 
 ## 安装
 
@@ -44,8 +59,8 @@
 从源码构建：
 
 ```sh
-git clone https://github.com/Oliver-Rui/DeepSeek-Reasonix.git
-cd DeepSeek-Reasonix
+git clone https://github.com/Oliver-Rui/DeepSeek-Reasonix-continued.git
+cd DeepSeek-Reasonix-continued
 git switch studio
 ```
 

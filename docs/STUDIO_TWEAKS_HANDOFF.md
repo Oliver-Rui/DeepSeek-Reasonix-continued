@@ -5,7 +5,7 @@ status: active
 reviewed: 2026-11-14
 ---
 
-# Reasonix Studio Tweaks — handoff
+# DeepSeek-Reasonix-torch — handoff
 
 A personal fork of [DeepSeek-Reasonix](https://github.com/esengine/DeepSeek-Reasonix) on the
 `studio` (2.x) line. This document is the state of the fork at its first pushed revision: what

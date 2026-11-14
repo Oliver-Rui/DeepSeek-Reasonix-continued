@@ -96,3 +96,7 @@ scripts/official-theme-art/__pycache__/
 *.exe
 *.exe~
 /relayfake
+
+# ZCode's plan mode writes its working plan here; repolint reads every .md in
+# the tree, and the plan is session scaffolding, not repo content.
+/.zcode/plans/
