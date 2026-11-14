@@ -34,7 +34,7 @@ import type { WorkspacesProps } from "./workspaceprops";
 import { SessionBatch, useSelectedRows } from "./SessionBatch";
 import { ProjectsHeader } from "./ProjectsHeader";
 import { WorkspaceGroupHead } from "./WorkspaceGroupHeaders";
-import { workspaceGroups } from "./workspaceGroups";
+import { workspaceGroups, groupFold } from "./workspaceGroups";
 import { useWorkspaceDrag } from "./useWorkspaceDrag";
 import { SessionTail } from "./SessionAge";
 import { SessionArchiveAction, SessionMoreAction, SessionPinAction } from "./SessionRowActions";
@@ -48,7 +48,7 @@ const parentOf = (root: string) => root.replace(/[/\\]+$/, "").split(/[/\\]/).sl
 const rowLabel = (session: TreeSession) =>
   session.title || (session.runtimeId && !session.turns ? t("common.new_session") : session.name);
 
-function WorkspacesView({ hub, tree, treeRead, answered = null, runtimes, active, folded, reload, retry, paging = NO_PAGING, previewLimit = Infinity, onFold, onToggleAll, allFolded, canFold, opening = "", onOpen, onFocus, onClose, liveIds, listedIds = liveIds, runs, scope = "all", pinned = new Set(), onPin = () => {}, onPause = () => {}, onBranch, onArchive = async () => {}, onRename, onError, adder, children, hasOtherRows }: WorkspacesProps) {
+function WorkspacesView({ hub, tree, treeRead, answered = null, runtimes, active, folded, reload, retry, paging = NO_PAGING, previewLimit = Infinity, onFold, onFoldGroup, opening = "", onOpen, onFocus, onClose, liveIds, listedIds = liveIds, runs, scope = "all", pinned = new Set(), onPin = () => {}, onPause = () => {}, onBranch, onArchive = async () => {}, onRename, onError, adder, children, hasOtherRows }: WorkspacesProps) {
   const [busy, setBusy] = useState("");
   const [confirm, setConfirm] = useState("");
   // The project whose folder an open just found gone: the question is asked about it, not about a removal chosen from the menu.
@@ -347,6 +347,11 @@ function WorkspacesView({ hub, tree, treeRead, answered = null, runtimes, active
   // Draw order: the chosen folders as one run, the window's own folder after it.
   const groups = workspaceGroups(shownTree);
   const ordered = [...groups.projects, ...groups.tasks];
+  // The group head and the row must read foldability the same way, or a click
+  // on the label can disagree with the chevrons it just moved.
+  const hasKids = (ws: TreeWorkspace) => ws.sessions.length > 0 || ws.countsComplete === false || ws.listingState === "degraded" || (pagedScope && unloaded(ws, loadedRows(ws.root)) > 0);
+  const projectsFold = groupFold(groups.projects, folded, hasKids);
+  const tasksFold = groupFold(groups.tasks, folded, hasKids);
   const displayed = ordered.filter((ws) => needle || !folded.has(ws.root))
     .flatMap(visibleSessions);
   const selected = useSelectedRows(displayed, selection, setSelection);
@@ -366,14 +371,14 @@ function WorkspacesView({ hub, tree, treeRead, answered = null, runtimes, active
         }}
         onBusy={(pending) => { setBusy(pending ? "batch" : ""); if (pending) { setSessionMenu(""); setEditing(""); setConfirm(""); } }}
         onClose={onClose} onArchive={onArchive} liveIds={liveIds} reload={reload} onError={onError} />
-      <ProjectsHeader adder={adder} onToggleAll={onToggleAll} allFolded={needle ? false : allFolded} canFold={canFold} searching={!!needle}
+      <ProjectsHeader adder={adder}
         onSelect={() => setSelection(new Set())} selecting={selection !== null} canSelect={displayed.length > 0} />
       <div className="scroll">
         <div role="tree" aria-label={t("session.projects_and_conversations")} aria-multiselectable={selection !== null} inert={busy === "batch"} data-action-keydown="tree.navigate" ref={treeKeys.ref} onKeyDown={treeKeys.onKeyDown}>
           {ordered.map((ws, at) => {
             // A fold is a resting-state preference; while a query is on it would hide
             // the very rows the query just found.
-            const hasChildren = ws.sessions.length > 0 || ws.countsComplete === false || ws.listingState === "degraded" || (pagedScope && unloaded(ws, loadedRows(ws.root)) > 0);
+            const hasChildren = hasKids(ws);
             const visible = visibleSessions(ws);
             const hidden = ws.sessions.length - visible.length;
             const shut = hasChildren && !needle && folded.has(ws.root);
@@ -385,8 +390,10 @@ function WorkspacesView({ hub, tree, treeRead, answered = null, runtimes, active
             const opensTasks = at === groups.projects.length;
             return (
               <div className="wsnode" key={ws.root} data-current={panesOf(ws.root).includes(active) ? "" : undefined} data-missing={ws.missing ? "" : undefined}>
-                {opensProjects && <WorkspaceGroupHead group="projects" />}
-                {opensTasks && <WorkspaceGroupHead group="tasks" />}
+                {opensProjects && <WorkspaceGroupHead group="projects" folded={projectsFold.folded} canFold={projectsFold.canFold} searching={searching}
+                  onToggle={onFoldGroup && (() => onFoldGroup(projectsFold.roots, !projectsFold.folded))} />}
+                {opensTasks && <WorkspaceGroupHead group="tasks" folded={tasksFold.folded} canFold={tasksFold.canFold} searching={searching}
+                  onToggle={onFoldGroup && (() => onFoldGroup(tasksFold.roots, !tasksFold.folded))} />}
                 {confirm === ws.root ? (
                   <Confirm
                     what={gone === ws.root ? t("session.folder_gone_remove_from_list", { name: ws.name }) : t("session.remove_name_from_the_list", { name: ws.name })}

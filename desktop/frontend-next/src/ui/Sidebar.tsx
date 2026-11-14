@@ -7,13 +7,12 @@ import { t } from "../i18n";
 import logoWordmark from "../assets/logo-wordmark.svg";
 import type { ApprovalMode } from "../port/port";
 import type { HubPort, RuntimeView, TreeWorkspace } from "../port/hub";
-import { workspaceContains } from "../port/hub";
 import type { RemoteHost } from "../port/remote";
 import type { Adder } from "./addws";
 import { ContentMatches } from "./ContentMatches";
 import { SECTION_NAME, SETTINGS } from "./prefsnav";
 import { RailSearch } from "./railsearch";
-import { RemoteHosts, remoteProjectKey, remoteWorkspaces } from "./RemoteHosts";
+import { RemoteHosts, remoteWorkspaces } from "./RemoteHosts";
 import { remoteProjects } from "./remoteProjects";
 import { StudioIcon } from "./StudioIcon";
 import { UpdateNotice } from "./UpdateNotice";
@@ -245,15 +244,13 @@ export function Sidebar({
     else next.delete(root);
     setFolded(next);
   };
-  const foldable = [
-    ...tree.filter((ws) => ws.sessions.length || ws.remaining).map((ws) => ws.root),
-    ...shownRemotes.flatMap((host) => remoteWorkspaces(host, remoteTrees[host.name], runtimes)
-      .filter((ws) => ws.sessions.length || ws.total || !remoteTrees[host.name] || runtimes.some((rt) => rt.host === host.name && workspaceContains(ws, rt.root)))
-      .map((ws) => remoteProjectKey(host.name, ws.root))),
-  ];
-  const allFolded = foldable.length > 0 && foldable.every((key) => folded.has(key));
-  const toggleAll = () => setFolded(allFolded
-    ? new Set([...folded].filter((key) => !foldable.includes(key))) : new Set([...folded, ...foldable]));
+  // A group head folds a whole run at once. The roots arrive already chosen —
+  // the view knows which of its rows can fold — so this only writes the set.
+  const foldGroup = (roots: string[], shut: boolean) => {
+    const next = new Set(folded);
+    for (const root of roots) { if (shut) next.add(root); else next.delete(root); }
+    setFolded(next);
+  };
 
   return (
     <>
@@ -308,9 +305,7 @@ export function Sidebar({
         runtimes={runtimes}
         active={active}
         folded={folded}
-        onToggleAll={toggleAll}
-        allFolded={allFolded}
-        canFold={foldable.length > 0}
+        onFoldGroup={foldGroup}
         onFold={onFold}
         reload={reloadTree}
         retry={retryTree ? () => void retryTree() : undefined}

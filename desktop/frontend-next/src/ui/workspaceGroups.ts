@@ -16,3 +16,17 @@ export function workspaceGroups(tree: TreeWorkspace[]): WorkspaceGroups {
     tasks: tree.filter((ws) => !ws.remembered),
   };
 }
+
+/** How a group head reads and writes the fold: the roots it governs are the
+ *  run's rows that can fold at all, and the head counts as folded only when
+ *  every one of them is — the same rows' chevrons read this set back. */
+export interface GroupFold {
+  roots: string[];
+  canFold: boolean;
+  folded: boolean;
+}
+
+export function groupFold(list: TreeWorkspace[], folded: Set<string>, canFoldRow: (ws: TreeWorkspace) => boolean): GroupFold {
+  const roots = list.filter(canFoldRow).map((ws) => ws.root);
+  return { roots, canFold: roots.length > 0, folded: roots.length > 0 && roots.every((root) => folded.has(root)) };
+}

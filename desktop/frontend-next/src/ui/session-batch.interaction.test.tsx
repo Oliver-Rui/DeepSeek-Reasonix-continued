@@ -50,8 +50,8 @@ async function selectAll() {
 it("keeps the batch entry in the project list header without occupying an idle toolbar", async () => {
   draw();
   expect(document.querySelector(".session-batch-entry, .session-batch")).toBeNull();
-  // The entry is a header control beside fold-all, not a row in a project's
-  // menu: picking conversations is about the whole list.
+  // The entry is a header control beside the scope filter, not a row in a
+  // project's menu: picking conversations is about the whole list.
   const entry = screen.getByRole("button", { name: "选择本机会话" });
   expect(screen.queryByRole("menuitem", { name: "选择本机会话" })).toBeNull();
   await userEvent.click(entry);

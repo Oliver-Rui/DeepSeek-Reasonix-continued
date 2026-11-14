@@ -1679,13 +1679,13 @@ A sub-agent row, by the list's own width:
 ## Unified project list
 
 - The sidebar is one project list: local roots and SSH roots share alignment and keyboard levels. Machine names are secondary project metadata, never parent groups. Remote folds use the host and root together as identity.
-- Project headings have no separate chevron. Clicking a heading or using the tree arrow keys toggles its conversations; known empty projects do not advertise expansion. The heading toolbar switches all projects together, while search reveals matching conversations independently of saved folds.
-- The project toolbar keeps collapse/expand beside the label and open-project plus and overflow at the right. The plus opens the common local/SSH location picker; project-row chat icons create conversations. Empty lists retain a text entry.
+- Project rows carry the fold chevron and read as plain text: no folder glyph, so the name is the row. Clicking a row or using the tree arrow keys toggles its conversations; known empty projects do not advertise expansion.
+- The two standing labels 项目 and 任务 are group heads, not passive captions: each carries its run's fold-all and writes the rows' own fold set, so one click rests the whole run and the label's chevron agrees with every row's. Each head folds its own group only; remote projects fold from their rows. Search reveals matching conversations independently of saved folds, and a searching head disables itself rather than fold invisibly.
+- The project toolbar keeps the view label, the scope filter, session selection and open-project plus; it carries no fold-all of its own, because the group heads above the rows now hold that function. The plus opens the common local/SSH location picker; project-row chat icons create conversations. Empty lists retain a text entry.
 - Each project previews five recent sessions and keeps an older active/opening session visible. Search and explicit scopes show their matches. Show more reveals loaded rows and uses the existing bounded kernel paging path.
 - Recent stays in the project toolbar rather than adding a fifth session segment. Its modal shows session identity, owning project and activity age. A separate page-status line keeps the three footer buttons on one row at phone widths.
 - Time metadata comes only from canonical last-active timestamps. Loaded/total session counts remain available to assistive technology without visible badges.
-- The sidebar defaults to 316px, respects saved widths and retains its existing 232px floor. Folder glyphs, titles, action slots and conversation indents align across environments. Hover actions reserve their space.
-- The diagonal toolbar glyphs reuse Tabler's MIT-licensed [collapse][tabler-collapse] and [expand][tabler-expand] paths through the existing Studio icon component.
+- The sidebar defaults to 316px, respects saved widths and retains its existing 232px floor. Titles, action slots and conversation indents align across environments. Hover actions reserve their space.
 
 ## Session hover actions
 
@@ -1702,9 +1702,6 @@ A sub-agent row, by the list's own width:
 - Hover actions default to hidden unless this machine explicitly enabled them; saved on and off preferences survive.
   Hidden actions remain available in the session menus. Touch surfaces show
   idle-row actions without requiring hover.
-
-[tabler-collapse]: https://github.com/tabler/tabler-icons/blob/main/icons/outline/arrows-diagonal-minimize-2.svg
-[tabler-expand]: https://github.com/tabler/tabler-icons/blob/main/icons/outline/arrows-diagonal-2.svg
 
 ## Brand lockup
 
