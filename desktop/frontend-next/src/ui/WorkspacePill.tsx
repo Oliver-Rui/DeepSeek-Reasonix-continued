@@ -76,8 +76,10 @@ export function WorkspacePill() {
   };
   const pickParent = () => {
     // A picker without a desktop host to answer it — null, or an error — falls
-    // back to typing the folder: the path field replaces the picker row.
-    void adder?.pickFolder().then((dir) => {
+    // back to typing the folder: the path field replaces the picker row. The
+    // start folder is the platform's own: a fresh conversation works inside the
+    // app's own area, and a new project is nobody's subfolder of it.
+    void adder?.pickFolder("").then((dir) => {
       if (dir) setParent(dir);
       else setNoPicker(true);
     }).catch(() => setNoPicker(true));

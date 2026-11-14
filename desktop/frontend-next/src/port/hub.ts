@@ -285,7 +285,10 @@ export interface HubPort extends SharePort {
   // separate read so the page can choose a usable fallback before invoking a
   // host-only action.
   hostCapabilities(): Promise<HostCapabilities>;
-  pickFolder(): Promise<string | null>;
+  // preferred starts the OS picker at a given folder; undefined keeps each
+  // host's own default (the running workspace), and "" hands the choice to
+  // the platform's last-used directory.
+  pickFolder(preferred?: string): Promise<string | null>;
   // Machine settings resolve a local owner; workspace reads can pin a runtime.
   machinePort(runtimeId?: string): AgentPort;
   // Absolute paths of every file dropped anywhere on the window. It belongs
@@ -633,8 +636,8 @@ export class SseHub implements HubPort {
     };
   }
 
-  async pickFolder() {
-    const shellPath = await this.shell.pickFolder();
+  async pickFolder(preferred?: string) {
+    const shellPath = await this.shell.pickFolder(preferred);
     if (shellPath !== null) return shellPath;
 
     // A browser cannot reveal an absolute local path, but this UI is served by
@@ -644,7 +647,7 @@ export class SseHub implements HubPort {
       method: "POST",
       headers: { "content-type": "application/json" },
       credentials: "same-origin",
-      body: "{}",
+      body: JSON.stringify({ startIn: preferred ?? "" }),
     });
     if (res.status === 501 || res.status === 404) return null;
     if (!res.ok) await SseHub.fail("/host/pick-folder", res);

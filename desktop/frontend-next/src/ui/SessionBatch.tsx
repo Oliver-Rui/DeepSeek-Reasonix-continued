@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { current, t } from "../i18n";
 import type { HubPort, TreeSession } from "../port/hub";
+import { StudioIcon } from "./StudioIcon";
 import { clearDraftForSession } from "./drafts";
 
 /** The selected rows that are still on screen; a row that leaves the displayed set leaves the selection. */
@@ -125,7 +126,9 @@ export function SessionBatch({ hub, selection, selected, displayed, onSelect, on
     <div className="session-batch" aria-busy={pending}>
       <div className="session-batch-head">
         <span role="status">{t("session.n_sessions_selected", { n: selected.length })}</span>
-        <button ref={doneButton} data-action="session.selection" data-value="end" disabled={pending} onClick={() => { cancel(); onSelect(null); }}>{t("session.done_selecting")}</button>
+        <button ref={doneButton} className="x" data-action="session.selection" data-value="end" disabled={pending}
+          aria-label={t("session.done_selecting")} title={t("session.done_selecting")}
+          onClick={() => { cancel(); onSelect(null); }}><StudioIcon name="close" /></button>
       </div>
       <div className="session-batch-actions">
         <button data-action="session.selection" data-value={all ? "clear" : "all"} disabled={phase !== "idle" || displayed.length === 0}

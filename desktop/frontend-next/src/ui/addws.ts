@@ -11,7 +11,7 @@ export interface Adder {
   closePath: () => void;
   /** The system folder picker, for a caller that asks twice — the blank-project
    *  dialog picks the folder a new project is made inside, then adds it apart. */
-  pickFolder: () => Promise<string | null>;
+  pickFolder: (preferred?: string) => Promise<string | null>;
   /** Make an empty, named folder inside `parent` and remember it. The pill's
    *  新建空白项目 uses this; the pane switches itself, so onAdded stays out. */
   addNamed: (name: string, parent: string) => Promise<TreeWorkspace>;
@@ -90,11 +90,11 @@ export function useAddWorkspace(
   }, [busy]);
 
   const pickFolder = useCallback(
-    () =>
+    (preferred?: string) =>
       hub
         .hostCapabilities()
         .catch(() => LEGACY_CAPABILITIES)
-        .then((capabilities) => (capabilities.pickFolder ? hub.pickFolder() : Promise.resolve(null))),
+        .then((capabilities) => (capabilities.pickFolder ? hub.pickFolder(preferred) : Promise.resolve(null))),
     [hub],
   );
 
