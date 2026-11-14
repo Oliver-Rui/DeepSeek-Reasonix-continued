@@ -108,10 +108,13 @@ it("starts from a folded folder with nothing the fold lets stay selected", async
 });
 
 it("keeps opening projects and the list menu outside the project tree", async () => {
-  const pane = draw();
-  await userEvent.click(screen.getByRole("button", { name: "打开项目" }));
+  const pane = draw([], "all", new Set(), []);
+  // The empty tree's own button is the way in: adding a project never grows a
+  // machine row inside the tree.
+  await userEvent.click(screen.getByRole("button", { name: "打开第一个项目" }));
   expect(pane.add).toHaveBeenCalledOnce();
   expect(screen.queryByRole("treeitem", { name: /这台机器/ })).toBeNull();
+  pane.update([{ root: "/w", name: "Project", remembered: true, sessions }]);
   await startSelection();
   expect(screen.getByText("Alpha")).toBeTruthy();
 });

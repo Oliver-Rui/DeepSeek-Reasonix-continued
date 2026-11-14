@@ -87,11 +87,12 @@ it("offers only Remove for an unremembered project", async () => {
   expect(screen.getByRole("menuitem", { name: /从列表移除/ })).toBeTruthy();
 });
 
-it("reads as two sections: the projects run, then the window's own folder", () => {
-  // The kernel can list the unremembered folder before the projects; the draw
-  // order is the view's, so the tree must still run 项目 above 任务.
+it("reads as two sections: the projects run, then the kernel's own folder", () => {
+  // The kernel can list its own folder before the projects; the draw order is
+  // the view's, so the tree must still run 项目 above 任务 — and the auto
+  // folder itself draws no row: its sessions hang straight under 任务.
   const tree: TreeWorkspace[] = [
-    { root: "/task", name: "task", remembered: false, sessions: [{ path: "/task/t.jsonl", name: "t", title: "t" }] },
+    { root: "/task", name: "task", auto: true, sessions: [{ path: "/task/t.jsonl", name: "t", title: "t" }] },
     { root: "/a", name: "a", remembered: true, sessions: [] },
   ];
   render(<Workspaces hub={{ moveWorkspace: vi.fn() } as never} tree={tree} treeRead runtimes={[]} active=""
@@ -99,5 +100,5 @@ it("reads as two sections: the projects run, then the window's own folder", () =
     onClose={async () => {}} liveIds={() => []} runs={{}} onRename={() => {}} onError={() => {}}
     adder={{ add: () => {}, close: () => {}, at: null } as never} />);
   const rows = [...document.querySelector('[role="tree"]')!.querySelectorAll(".wsgroup, [role='treeitem']")].map((el) => el.textContent);
-  expect(rows).toEqual(["项目", "a", "任务", "task", "t"]);
+  expect(rows).toEqual(["项目", "a", "任务", "t"]);
 });

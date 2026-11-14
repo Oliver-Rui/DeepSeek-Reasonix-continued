@@ -49,7 +49,9 @@ it("keeps scope filters quiet without showing local-only totals for a unified li
 it("starts directly with projects instead of a local machine parent", () => {
   draw();
   expect(screen.queryByRole("treeitem", { name: /这台机器/ })).toBeNull();
-  expect(screen.getByRole("button", { name: "打开项目" })).toBeTruthy();
+  // No header adder either: the rows start at the projects themselves, and the
+  // ways in live on the empty tree's own button and the composer's pill.
+  expect(screen.queryByRole("button", { name: "打开项目" })).toBeNull();
   const project = document.querySelector<HTMLElement>(".wsrow")!;
   expect(project.getAttribute("aria-level")).toBe("1");
   expect(project.querySelector(".studio-icon")).toBeTruthy();

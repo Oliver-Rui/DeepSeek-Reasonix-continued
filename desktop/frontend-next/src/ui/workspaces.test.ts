@@ -5,7 +5,9 @@ import { removeHint } from "./WorkspaceConfirm";
 import { workspaceGroups } from "./workspaceGroups";
 
 describe("the tree's two groups", () => {
-  const ws = (root: string, remembered?: boolean): TreeWorkspace => ({ root, name: root, remembered, sessions: [] });
+  // The kernel marks its own workspace with `auto`; that mark — not a
+  // remembered flag — decides which group a folder lands in.
+  const ws = (root: string, auto?: boolean): TreeWorkspace => ({ root, name: root, auto, sessions: [] });
   type Case = [string, TreeWorkspace[], { projects: string[]; tasks: string[] }];
   const split = (groups: { projects: TreeWorkspace[]; tasks: TreeWorkspace[] }) => ({
     projects: groups.projects.map((x) => x.root),
@@ -13,11 +15,11 @@ describe("the tree's two groups", () => {
   });
 
   it.each<Case>([
-    ["keeps each run in the order the tree gave it", [ws("/auto"), ws("/a", true), ws("/w", false), ws("/b", true)], { projects: ["/a", "/b"], tasks: ["/auto", "/w"] }],
-    ["draws no projects group over a tree of only the window's folder", [ws("/auto")], { projects: [], tasks: ["/auto"] }],
-    ["draws no task group when every folder was chosen", [ws("/a", true), ws("/b", true)], { projects: ["/a", "/b"], tasks: [] }],
+    ["keeps each run in the order the tree gave it", [ws("/auto", true), ws("/a"), ws("/w"), ws("/b")], { projects: ["/a", "/w", "/b"], tasks: ["/auto"] }],
+    ["draws no projects group over a tree of only the kernel's own folder", [ws("/auto", true)], { projects: [], tasks: ["/auto"] }],
+    ["draws no task group when every folder is a project", [ws("/a"), ws("/b")], { projects: ["/a", "/b"], tasks: [] }],
     ["answers two empty groups for an empty tree", [], { projects: [], tasks: [] }],
-    ["reads a missing remembered flag as the window's own folder", [ws("/w")], { projects: [], tasks: ["/w"] }],
+    ["reads a missing auto mark as a project row", [ws("/w")], { projects: ["/w"], tasks: [] }],
   ])("%s", (_name, tree, want) => {
     expect(split(workspaceGroups(tree))).toEqual(want);
   });

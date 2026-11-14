@@ -71,7 +71,11 @@ export const SETTING_SCREEN: Record<string, string> = {
 /** What to hand the settings sheet for a setting id: its own row, else the top. */
 export const settingScreen = (id: string): string | undefined => SETTING_SCREEN[id];
 
+// The write-lease search lands on the session page that hosts the lease, not on
+// a sheet row — the one deliberate handoff off the sheet.
+const SESSION_PAGES = new Set(["session:write-lease"]);
+
 export const unknownScreens = (): string[] =>
   Object.entries(SETTING_SCREEN)
-    .filter(([, at]) => !SETTINGS.some((s) => `${s.section}:${s.anchor}` === at))
+    .filter(([, at]) => !SESSION_PAGES.has(at) && !SETTINGS.some((s) => `${s.section}:${s.anchor}` === at))
     .map(([id]) => id);

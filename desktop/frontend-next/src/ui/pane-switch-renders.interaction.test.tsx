@@ -48,6 +48,10 @@ it("re-renders only the two panes a tab switch touches", async () => {
     expect(found.length).toBeGreaterThanOrEqual(PANES);
     return found;
   });
+  // The measurement window opens only once every pane has mounted and the
+  // opening work has drained — a wall-clock settle reads fine locally and
+  // counts the mount itself on a slower machine.
+  await waitFor(() => expect(renders.size).toBeGreaterThanOrEqual(PANES));
   await new Promise((r) => setTimeout(r, 300));
   renders.clear();
   await userEvent.click(rows[3]);
